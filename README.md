@@ -4,6 +4,12 @@
 
 **Live demo:** https://nekomo.netlify.app/
 
+**Community:** [Discord](https://discord.com/invite/E4Ezmgg7Ka) ·
+[GitHub org](https://github.com/Nekomo-App) ·
+[Nekomo app](https://github.com/Nekomo-App/Nekomo) ·
+[Android sources](https://github.com/Nekomo-App/neko-source) ·
+[This website](https://github.com/Nekomo-App/nekomo-web)
+
 > **Note:** This is a web project. It is not affiliated with or linked to any
 > Nekomo app or other existing platform.
 
