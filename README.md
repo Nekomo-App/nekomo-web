@@ -1,4 +1,4 @@
-# Nekomo
+# Nekomo Web Demo
 
 **Discover your next story.** Nekomo is an anime discovery and legally authorized streaming web app — a dark-first, pink-accented catalog with watchlists, progress tracking, search, a licensed-content-only video player, themeable UI, and an admin/developer area for source and API management.
 
