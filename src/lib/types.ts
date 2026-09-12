@@ -11,6 +11,8 @@ export interface StreamingLink {
   url: string;
   type: 'sub' | 'dub' | 'both';
   note?: string;
+  /** Free-with-ads or licensor-uploaded source. */
+  free?: boolean;
 }
 
 export interface SubtitleTrack {

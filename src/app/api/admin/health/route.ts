@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { isAdmin } from '@/lib/auth';
 import { cacheStats } from '@/lib/cache';
-import { getFlags, listIntegrations } from '@/lib/admin/store';
+import { displayStatus, getFlags, listIntegrations, listNotifications } from '@/lib/admin/store';
+import { startSourceScheduler } from '@/lib/admin/checks';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
@@ -22,7 +23,13 @@ export async function GET() {
   const mem = process.memoryUsage();
   const integrations = listIntegrations();
   const counts = { healthy: 0, degraded: 0, down: 0, unknown: 0 };
-  for (const i of integrations) counts[i.health.status]++;
+  const statuses: Record<string, number> = {};
+  for (const i of integrations) {
+    counts[i.health.status]++;
+    const s = displayStatus(i);
+    statuses[s] = (statuses[s] ?? 0) + 1;
+  }
+  startSourceScheduler();
 
   return NextResponse.json({
     uptimeSec: Math.round((Date.now() - startedAt) / 1000),
@@ -32,7 +39,8 @@ export async function GET() {
     memoryMb: Math.round(mem.rss / 1024 / 1024),
     cache: cacheStats(),
     flags: getFlags(),
-    integrations: { total: integrations.length, ...counts },
+    integrations: { total: integrations.length, ...counts, statuses },
+    notifications: listNotifications().slice(0, 20),
     // presence of env config, never values
     config: {
       adminKeyConfigured: Boolean(process.env.ADMIN_KEY) || process.env.NODE_ENV !== 'production',

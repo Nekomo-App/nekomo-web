@@ -40,7 +40,7 @@ const STRINGS = {
     'nav.clearAll': 'Clear all',
     'nav.emptyNotifications': "Nothing yet — you're all caught up.",
     'footer.tagline': 'Discover your next story.',
-    'footer.legal': 'Licensed content only — we never mirror unauthorized streams.',
+    'footer.legal': 'An open-source catalog project — sources are labeled and community-managed.',
     'footer.privacy':
       'For your privacy and safety, we recommend browsing with a VPN and/or a DNS-level ad blocker.',
     'footer.dmca': 'DMCA',
@@ -79,7 +79,7 @@ const STRINGS = {
     'nav.clearAll': 'Borrar todo',
     'nav.emptyNotifications': 'Nada por aquí — estás al día.',
     'footer.tagline': 'Descubre tu próxima historia.',
-    'footer.legal': 'Solo contenido con licencia — nunca reflejamos streams no autorizados.',
+    'footer.legal': 'Un proyecto de catálogo de código abierto — las fuentes están etiquetadas y gestionadas por la comunidad.',
     'footer.privacy':
       'Para tu privacidad y seguridad, recomendamos navegar con una VPN y/o un bloqueador de anuncios DNS.',
     'footer.dmca': 'DMCA',
@@ -118,7 +118,7 @@ const STRINGS = {
     'nav.clearAll': 'Tout effacer',
     'nav.emptyNotifications': 'Rien de nouveau — vous êtes à jour.',
     'footer.tagline': 'Découvrez votre prochaine histoire.',
-    'footer.legal': 'Contenu sous licence uniquement — aucun stream non autorisé.',
+    'footer.legal': 'Un projet de catalogue open source — les sources sont étiquetées et gérées par la communauté.',
     'footer.privacy':
       'Pour votre confidentialité et votre sécurité, nous recommandons un VPN et/ou un bloqueur de pubs DNS.',
     'footer.dmca': 'DMCA',
@@ -157,7 +157,7 @@ const STRINGS = {
     'nav.clearAll': 'Alle löschen',
     'nav.emptyNotifications': 'Nichts Neues — du bist auf dem neuesten Stand.',
     'footer.tagline': 'Entdecke deine nächste Geschichte.',
-    'footer.legal': 'Nur lizenzierte Inhalte — keine unautorisierten Streams.',
+    'footer.legal': 'Ein Open-Source-Katalogprojekt — Quellen sind gekennzeichnet und community-verwaltet.',
     'footer.privacy':
       'Für deine Privatsphäre und Sicherheit empfehlen wir ein VPN und/oder einen DNS-Werbeblocker.',
     'footer.dmca': 'DMCA',
@@ -196,7 +196,7 @@ const STRINGS = {
     'nav.clearAll': 'すべて消去',
     'nav.emptyNotifications': '新着はありません。',
     'footer.tagline': '次の物語を見つけよう。',
-    'footer.legal': 'ライセンス取得済みのコンテンツのみ — 無許可のストリームは一切提供しません。',
+    'footer.legal': 'オープンソースのカタログプロジェクト — ソースはラベル付きでコミュニティ管理されています。',
     'footer.privacy':
       'プライバシーと安全のため、VPNやDNS広告ブロッカーの利用をおすすめします。',
     'footer.dmca': 'DMCA',

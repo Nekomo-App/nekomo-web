@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { isAdmin } from '@/lib/auth';
 import {
   createIntegration,
+  listDeletedIntegrations,
   listIntegrations,
   toPublicIntegration,
   type IntegrationKind,
@@ -10,13 +11,29 @@ import { validateExternalUrl } from '@/lib/ssrf';
 
 const VALID_KINDS = new Set(['source', 'api']);
 const VALID_AUTH = new Set(['none', 'api-key', 'bearer', 'oauth', 'custom']);
+const VALID_CATEGORIES = new Set(['official', 'open-api', 'open-source', 'community', 'non-official', 'custom']);
+const VALID_METHODS = new Set(['GET', 'HEAD']);
+const VALID_FORMATS = new Set(['json', 'html', 'any']);
+const VALID_PAGINATION = new Set(['none', 'page', 'offset', 'cursor']);
+const VALID_SCOPES = new Set(['public', 'private', 'local', 'self-hosted']);
 
 export async function GET(req: Request) {
   if (!isAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const kind = new URL(req.url).searchParams.get('kind') as IntegrationKind | null;
-  return NextResponse.json({
-    integrations: listIntegrations(kind ?? undefined).map(toPublicIntegration),
-  });
+  const q = new URL(req.url).searchParams;
+
+  if (q.get('export') === '1') {
+    // Portable export — credential env NAMES only, never values.
+    const items = listIntegrations().map(({ history: _h, health: _he, consecutiveFailures: _c, ...rest }) => ({
+      ...rest,
+      credentialConfigured: Boolean(rest.credentialEnv),
+    }));
+    return NextResponse.json({ exportedAt: new Date().toISOString(), version: 1, integrations: items });
+  }
+
+  const kind = q.get('kind') as IntegrationKind | null;
+  const integrations = listIntegrations(kind ?? undefined).map(toPublicIntegration);
+  const deleted = q.get('includeDeleted') === '1' ? listDeletedIntegrations().map(toPublicIntegration) : undefined;
+  return NextResponse.json({ integrations, ...(deleted ? { deleted } : {}) });
 }
 
 export async function POST(req: Request) {
@@ -48,6 +65,18 @@ export async function POST(req: Request) {
   if (!VALID_AUTH.has(authMethod)) {
     return NextResponse.json({ error: 'Invalid auth method' }, { status: 400 });
   }
+  const category = String(body.category ?? 'community');
+  if (!VALID_CATEGORIES.has(category)) {
+    return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
+  }
+  const requestMethod = String(body.requestMethod ?? 'GET');
+  if (!VALID_METHODS.has(requestMethod)) return NextResponse.json({ error: 'Invalid request method' }, { status: 400 });
+  const responseFormat = String(body.responseFormat ?? 'any');
+  if (!VALID_FORMATS.has(responseFormat)) return NextResponse.json({ error: 'Invalid response format' }, { status: 400 });
+  const pagination = String(body.pagination ?? 'none');
+  if (!VALID_PAGINATION.has(pagination)) return NextResponse.json({ error: 'Invalid pagination' }, { status: 400 });
+  const scope = String(body.scope ?? 'public');
+  if (!VALID_SCOPES.has(scope)) return NextResponse.json({ error: 'Invalid scope' }, { status: 400 });
 
   const item = createIntegration({
     kind,
@@ -62,10 +91,25 @@ export async function POST(req: Request) {
     timeoutMs: clampInt(body.timeoutMs, 500, 60_000, 10_000),
     retries: clampInt(body.retries, 0, 5, 2),
     rateLimitPerMin: clampInt(body.rateLimitPerMin, 1, 600, 60),
+    cacheTtlSec: clampInt(body.cacheTtlSec, 0, 86_400, 300),
+    requestMethod: requestMethod as never,
+    requestHeaders: strMap(body.requestHeaders),
+    queryParams: strMap(body.queryParams),
+    responseFormat: responseFormat as never,
+    pagination: pagination as never,
+    scope: scope as never,
+    category: category as never,
+    verified: body.verified === true && category === 'official',
+    reviewState: 'approved', // admin-created items are pre-approved
+    description: body.description ? String(body.description).slice(0, 1000) : undefined,
+    logoUrl: body.logoUrl ? String(body.logoUrl).slice(0, 300) : undefined,
+    maintainer: body.maintainer ? String(body.maintainer).slice(0, 120) : undefined,
+    features: strList(body.features),
     languages: strList(body.languages),
     regions: strList(body.regions),
     contentTypes: strList(body.contentTypes),
     docsUrl: body.docsUrl ? String(body.docsUrl).slice(0, 300) : undefined,
+    legal: legalMap(body.legal),
     notes: body.notes ? String(body.notes).slice(0, 500) : undefined,
   });
 
@@ -81,4 +125,24 @@ function clampInt(v: unknown, min: number, max: number, dflt: number): number {
 function strList(v: unknown): string[] {
   if (!Array.isArray(v)) return [];
   return v.map(String).map((s) => s.trim()).filter(Boolean).slice(0, 20);
+}
+
+function strMap(v: unknown): Record<string, string> {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return {};
+  const out: Record<string, string> = {};
+  for (const [k, val] of Object.entries(v as Record<string, unknown>).slice(0, 20)) {
+    const key = k.trim().slice(0, 60);
+    if (key && typeof val === 'string') out[key] = val.slice(0, 500);
+  }
+  return out;
+}
+
+function legalMap(v: unknown): { terms?: string; privacy?: string; dmca?: string } {
+  if (!v || typeof v !== 'object') return {};
+  const o = v as Record<string, unknown>;
+  const pick = (k: string) => {
+    const s = String(o[k] ?? '').trim();
+    return s.startsWith('https://') || s.startsWith('http://') || s.startsWith('/') ? s.slice(0, 300) : undefined;
+  };
+  return { terms: pick('terms'), privacy: pick('privacy'), dmca: pick('dmca') };
 }

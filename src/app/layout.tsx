@@ -11,21 +11,21 @@ import { ErrorReporter } from '@/components/ErrorReporter';
 export const metadata: Metadata = {
   title: { default: 'Nekomo — Discover your next story', template: '%s · Nekomo' },
   description:
-    'Nekomo is an anime discovery platform with legally authorized streaming. Browse, track, and watch from official sources.',
+    'Nekomo is an open-source anime discovery project. Browse, track, and find where to watch — sources are labeled and community-managed.',
   metadataBase: new URL(process.env.SITE_URL || 'http://localhost:3000'),
   applicationName: 'Nekomo',
   openGraph: {
     siteName: 'Nekomo',
     title: 'Nekomo — Discover your next story',
     description:
-      'Anime discovery and legally authorized streaming. Browse, track, and watch from official sources.',
+      'Open-source anime discovery. Browse, track, and find where to watch — sources labeled and community-managed.',
     type: 'website',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Nekomo — Discover your next story',
-    description: 'Anime discovery and legally authorized streaming.',
+    description: 'Open-source anime discovery with a labeled, community-managed source directory.',
   },
   robots: { index: true, follow: true },
 };

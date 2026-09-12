@@ -15,6 +15,7 @@ import type {
   StreamingLink,
 } from '@/lib/types';
 import { ProviderError } from './jikan';
+import { catalogLinksFor } from './streaming';
 
 const BASE = 'https://kitsu.io/api/edge';
 const TIMEOUT_MS = 9000;
@@ -163,12 +164,7 @@ export async function trending(): Promise<AnimeSummary[]> {
 }
 
 function streamingLinksFor(title: string): StreamingLink[] {
-  const q = encodeURIComponent(title);
-  return [
-    { platform: 'Crunchyroll', url: `https://www.crunchyroll.com/search?q=${q}`, type: 'both', note: 'Search official catalog' },
-    { platform: 'Netflix', url: `https://www.netflix.com/search?q=${q}`, type: 'both', note: 'Search official catalog' },
-    { platform: 'HIDIVE', url: `https://www.hidive.com/search?q=${q}`, type: 'both', note: 'Search official catalog' },
-  ];
+  return catalogLinksFor(title);
 }
 
 export async function details(id: string): Promise<AnimeDetails> {

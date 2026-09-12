@@ -18,6 +18,7 @@ import type {
   TrailerEntry,
 } from '@/lib/types';
 import { currentSeason } from '@/lib/utils';
+import { catalogLinksFor } from './streaming';
 
 const CC = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample';
 const IA = 'https://archive.org/download';
@@ -32,6 +33,7 @@ const CC_VIDEOS = [
     note: 'Big Buck Bunny © Blender Foundation — CC-BY 3.0',
     mirrors: [
       { label: 'GCS', url: `${CC}/BigBuckBunny.mp4` },
+      { label: 'Blender CDN', url: 'https://download.blender.org/demo/movies/BBB/bbb_sunflower_1080p_30fps_normal.mp4' },
       { label: 'Internet Archive', url: `${IA}/BigBuckBunny_124/Content%2Fbig_buck_bunny_720p_surround.mp4` },
     ],
   },
@@ -490,20 +492,7 @@ function buildDetails(seed: LocalSeed): AnimeDetails {
       ? [
           { platform: 'Nekomo Originals', url: `/anime/${seed.id}`, type: 'both', note: 'Stream free on Nekomo' },
         ]
-      : [
-          {
-            platform: 'Crunchyroll',
-            url: `https://www.crunchyroll.com/search?q=${encodeURIComponent(seed.title)}`,
-            type: 'both',
-            note: 'Search official catalog',
-          },
-          {
-            platform: 'HIDIVE',
-            url: `https://www.hidive.com/search?q=${encodeURIComponent(seed.title)}`,
-            type: 'both',
-            note: 'Search official catalog',
-          },
-        ]);
+      : catalogLinksFor(seed.title));
 
   const characters: Character[] = seed.characters.map(([name, role, va], i) => ({
     id: `${seed.id}-c${i}`,

@@ -68,8 +68,22 @@ export function Footer({ dmcaEmail = 'legal@nekomo.example' }: { dmcaEmail?: str
             Legal
           </h3>
           <ul className="space-y-2 text-sm text-ink-muted">
-            <li>Metadata via the Jikan API (MyAnimeList data).</li>
-            <li>Streams shown only when licensed or explicitly permitted.</li>
+            <li>Open-source project — sources are labeled by category.</li>
+            <li>
+              <Link href="/sources" className="text-rose-light hover:underline">
+                Sources &amp; status
+              </Link>
+            </li>
+            <li>
+              <Link href="/privacy" className="text-rose-light hover:underline">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="text-rose-light hover:underline">
+                Terms of Use
+              </Link>
+            </li>
             <li>
               <Link href="/dmca" className="text-rose-light hover:underline">
                 {t('footer.dmca')} &amp; copyright notices

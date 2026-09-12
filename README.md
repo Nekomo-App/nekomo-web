@@ -140,8 +140,9 @@ for persistent admin state.
 
 Nekomo **never** embeds unauthorized video. `getAuthorizedStreamingSources()` only returns streams Nekomo owns, licenses, or has explicit permission to embed:
 
-- **Nekomo Originals** episodes stream Creative Commons–licensed films (© Blender Foundation, CC-BY) hosted as public sample media — explicitly cleared for embedding.
-- Everything else shows the official trailer (YouTube `youtube-nocookie` embed, ID supplied by the metadata provider) plus links to licensed platforms (Crunchyroll, HIDIVE, Netflix …) — never scraped players, torrents, or DRM bypasses.
+- **Nekomo Originals** episodes stream Creative Commons–licensed films (© Blender Foundation, CC-BY) hosted as public sample media — explicitly cleared for embedding. Each film carries multiple legal mirrors (Google sample bucket, Blender CDN, Internet Archive) selectable in the player's source menu.
+- Everything else shows the official trailer (YouTube `youtube-nocookie` embed, ID supplied by the metadata provider) plus links to licensed platforms — never scraped players, torrents, or DRM bypasses.
+- The viewing-links catalog lives in **`src/data/streaming-sources.json`** — free/licensor sources first (Muse Asia, AniOne, It's Anime, GundamInfo, TMS, Toei, Anime-Planet, RetroCrush, Tubi, Pluto TV, Bilibili), then subscription platforms (Crunchyroll, HIDIVE, Netflix, Hulu, Disney+, Prime Video). Edit that file to add or remove sources; every page and provider picks it up automatically. Provider-supplied links (Jikan/AniList) are merged in first and deduplicated.
 
 ## Architecture
 
@@ -158,7 +159,8 @@ src/
       kitsu.ts          tertiary metadata provider (Kitsu JSON:API, auto-fallback)
       aniskip.ts        intro/outro timings → player skip overlay
       local.ts          bundled fallback catalog + Nekomo Originals
-      streaming.ts      authorized-stream resolution + official links
+      streaming.ts      authorized-stream resolution + official links (JSON-driven)
+  data/               streaming-sources.json — licensed viewing-source catalog
     admin/store.ts      integrations, feature flags, audit log (in-memory)
     auth.ts             HMAC admin session cookie
     ssrf.ts             SSRF guard for admin-configured URLs

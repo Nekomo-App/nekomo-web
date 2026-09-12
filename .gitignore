@@ -31,3 +31,6 @@ next-env.d.ts
 
 # local data / reports
 /data/*.log
+
+# persisted admin store (local dev / self-hosted)
+/.data/

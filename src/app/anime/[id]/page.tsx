@@ -12,6 +12,7 @@ import { Poster } from '@/components/Poster';
 import { Tabs } from '@/components/Tabs';
 import { TrackView } from '@/components/TrackView';
 import { RatingWidget } from '@/components/RatingWidget';
+import { StreamingLinks } from '@/components/StreamingLinks';
 import { Synopsis } from '@/components/Synopsis';
 import { Comments } from '@/components/Comments';
 
@@ -207,8 +208,10 @@ export default async function AnimePage({ params }: { params: { id: string } }) 
                     content: (
                       <div className="max-w-xl">
                         <p className="mb-4 text-sm text-ink-muted">
-                          Nekomo only links to authorized platforms. We never mirror or proxy
-                          unauthorized streams.
+                          Viewing links below — free and licensed options are marked. Nekomo is an
+                          open-source project; see the{' '}
+                          <Link href="/sources" className="text-rose-light hover:underline">source directory</Link>{' '}
+                          for status and categories.
                         </p>
                         <StreamingLinks links={links} />
                       </div>
@@ -221,26 +224,6 @@ export default async function AnimePage({ params }: { params: { id: string } }) 
         </div>
       </div>
     </div>
-  );
-}
-
-function StreamingLinks({ links }: { links: { platform: string; url: string; note?: string }[] }) {
-  return (
-    <ul className="space-y-2">
-      {links.map((l) => (
-        <li key={l.platform + l.url}>
-          <a
-            href={l.url}
-            target={l.url.startsWith('http') ? '_blank' : undefined}
-            rel={l.url.startsWith('http') ? 'noopener noreferrer' : undefined}
-            className="flex items-center justify-between rounded-xl border border-line bg-card/60 px-4 py-3 transition-all hover:border-rose hover:shadow-glow-sm"
-          >
-            <span className="text-sm font-medium">{l.platform}</span>
-            <span className="text-xs text-ink-muted">{l.note ?? 'Official'} ↗</span>
-          </a>
-        </li>
-      ))}
-    </ul>
   );
 }
 

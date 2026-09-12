@@ -4,7 +4,9 @@ import { notFound } from 'next/navigation';
 import { getAuthorizedStreamingSources } from '@/lib/providers';
 import { officialLinksFor } from '@/lib/providers/streaming';
 import { cn } from '@/lib/utils';
+import type { StreamingLink } from '@/lib/types';
 import { Poster } from '@/components/Poster';
+import { StreamingLinks } from '@/components/StreamingLinks';
 import { TrackView } from '@/components/TrackView';
 import { VideoPlayer } from '@/components/VideoPlayer';
 
@@ -147,21 +149,7 @@ export default async function WatchPage({
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-muted">
               Official &amp; free sources
             </h3>
-            <ul className="space-y-1.5">
-              {links.map((l) => (
-                <li key={l.platform + l.url}>
-                  <a
-                    href={l.url}
-                    target={l.url.startsWith('http') ? '_blank' : undefined}
-                    rel={l.url.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    className="text-sm text-rose-light hover:underline"
-                  >
-                    {l.platform} ↗
-                  </a>
-                  {l.note && <p className="text-xs text-ink-muted">{l.note}</p>}
-                </li>
-              ))}
-            </ul>
+            <StreamingLinks links={links} variant="compact" />
           </div>
         </aside>
       </div>
@@ -176,7 +164,7 @@ function NoStreamPanel({
 }: {
   title: string;
   trailerId?: string;
-  links: { platform: string; url: string; note?: string }[];
+  links: StreamingLink[];
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-card">
@@ -196,26 +184,15 @@ function NoStreamPanel({
         </div>
       )}
       <div className="p-6">
-        <h2 className="font-display text-lg font-bold">No authorized stream on Nekomo</h2>
+        <h2 className="font-display text-lg font-bold">No playable stream on Nekomo</h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">
-          Nekomo only embeds video it owns, licenses, or has explicit permission to show.
-          This title is available through the official platforms below.
+          Nekomo is an open-source project and doesn't host this title. Watch it through one of the
+          platforms below — free and licensed options are marked. More sources are listed in the{' '}
+          <Link href="/sources" className="text-rose-light hover:underline">source directory</Link>.
         </p>
-        <ul className="mt-4 space-y-2">
-          {links.map((l) => (
-            <li key={l.platform + l.url}>
-              <a
-                href={l.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2.5 text-sm font-medium transition-all hover:border-rose hover:text-white"
-              >
-                {l.platform} <span aria-hidden="true">↗</span>
-                {l.note && <span className="text-xs text-ink-muted">{l.note}</span>}
-              </a>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-4">
+          <StreamingLinks links={links} />
+        </div>
       </div>
     </div>
   );

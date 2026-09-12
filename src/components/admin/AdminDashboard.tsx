@@ -28,7 +28,15 @@ interface Health {
   memoryMb: number;
   cache: { size: number; max: number };
   flags: Record<string, boolean>;
-  integrations: { total: number; healthy: number; degraded: number; down: number; unknown: number };
+  integrations: {
+    total: number;
+    healthy: number;
+    degraded: number;
+    down: number;
+    unknown: number;
+    statuses: Record<string, number>;
+  };
+  notifications: { id: string; ts: string; level: string; title: string; detail?: string }[];
   config: Record<string, boolean>;
   database: string;
   workers: string;
@@ -146,24 +154,26 @@ function Overview({
     );
   }
 
+  const st = health.integrations.statuses ?? {};
   const stats: { label: string; value: string; tone?: 'ok' | 'warn' | 'bad' }[] = [
     { label: 'Uptime', value: fmtUptime(health.uptimeSec) },
     { label: 'Version', value: `v${health.version} · ${health.env}` },
     { label: 'Memory', value: `${health.memoryMb} MB` },
     { label: 'Cache', value: `${health.cache.size}/${health.cache.max} entries` },
-    {
-      label: 'Integrations healthy',
-      value: `${health.integrations.healthy}/${health.integrations.total}`,
-      tone: health.integrations.down ? 'bad' : health.integrations.degraded ? 'warn' : 'ok',
-    },
-    { label: 'Degraded', value: String(health.integrations.degraded), tone: health.integrations.degraded ? 'warn' : undefined },
-    { label: 'Down', value: String(health.integrations.down), tone: health.integrations.down ? 'bad' : undefined },
+    { label: 'Working', value: String(st.working ?? 0), tone: 'ok' },
+    { label: 'Partial / Error', value: `${(st.partial ?? 0) + (st.error ?? 0)}`, tone: (st.partial ?? 0) + (st.error ?? 0) ? 'warn' : undefined },
+    { label: 'Offline', value: String(st.offline ?? 0), tone: st.offline ? 'bad' : undefined },
+    { label: 'Under review', value: String(st.review ?? 0), tone: st.review ? 'warn' : undefined },
+    { label: 'Disabled', value: String(st.disabled ?? 0) },
     { label: 'Node', value: health.node },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="flex justify-end">
+        <RunChecksButton onDone={onRetry} />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((s) => (
           <div key={s.label} className="rounded-2xl border border-line bg-card p-4">
             <p className="text-xs uppercase tracking-wider text-ink-muted">{s.label}</p>
@@ -181,7 +191,7 @@ function Overview({
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         <section className="rounded-2xl border border-line bg-card p-5">
           <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-ink-muted">
             Infrastructure
@@ -191,6 +201,30 @@ function Overview({
             <Row k="Storage" v={health.storage} />
             <Row k="Workers / queue" v={health.workers} />
           </dl>
+        </section>
+        <section className="rounded-2xl border border-line bg-card p-5">
+          <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-ink-muted">
+            Notifications
+          </h2>
+          {health.notifications?.length ? (
+            <ul className="mt-3 space-y-2">
+              {health.notifications.slice(0, 8).map((n) => (
+                <li key={n.id} className="text-sm">
+                  <span
+                    className={cn(
+                      'mr-2 inline-block h-2 w-2 rounded-full',
+                      n.level === 'error' ? 'bg-danger' : n.level === 'warn' ? 'bg-warn' : 'bg-success',
+                    )}
+                  />
+                  <span>{n.title}</span>
+                  <time className="ml-2 text-xs text-ink-muted">{new Date(n.ts).toLocaleString()}</time>
+                  {n.detail && <p className="ml-4 text-xs text-ink-muted">{n.detail}</p>}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-ink-muted">No alerts — all quiet.</p>
+          )}
         </section>
         <section className="rounded-2xl border border-line bg-card p-5">
           <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-ink-muted">
@@ -209,6 +243,38 @@ function Overview({
         </section>
       </div>
     </div>
+  );
+}
+
+function RunChecksButton({ onDone }: { onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          const res = await fetch('/api/admin/integrations/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ all: true }),
+          });
+          const d = await res.json().catch(() => ({}));
+          toast(
+            res.ok
+              ? `Source check complete — ${d.summary?.ok ?? 0}/${d.summary?.total ?? 0} working`
+              : d.error ?? 'Check run failed',
+            res.ok ? 'success' : 'error',
+          );
+        } finally {
+          setBusy(false);
+          onDone();
+        }
+      }}
+      className="min-h-[40px] rounded-xl bg-rose px-4 py-2 text-sm font-semibold text-white hover:bg-rose-mid disabled:opacity-60"
+    >
+      {busy ? 'Running checks…' : 'Run all source checks'}
+    </button>
   );
 }
 

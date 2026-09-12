@@ -275,58 +275,205 @@ function LoginInner() {
   );
 }
 
-/** Simple math puzzle — a friendly bot check, not a security control. */
+/**
+ * Friendly human check — visual puzzles (icon pick, pattern, odd-one-out,
+ * word match) plus an accessible text alternative. A bot deterrent, not a
+ * security control.
+ */
+type PuzzleKind = 'icon' | 'pattern' | 'odd' | 'word';
+
+const ICON_SETS = [
+  { target: '🐱', label: 'the cat', pool: ['🐶', '🐱', '🐭', '🦊', '🐻', '🐼', '🐨', '🦁', '🐸'] },
+  { target: '🌸', label: 'the flower', pool: ['🌵', '🌸', '🍁', '🌊', '🔥', '⭐', '🌙', '⚡', '❄️'] },
+  { target: '🍙', label: 'the rice ball', pool: ['🍜', '🍙', '🍣', '🍱', '🥟', '🍡', '🍤', '🍥', '🍘'] },
+];
+const PATTERNS = [
+  { seq: ['🌙', '⭐', '🌙', '⭐'], answer: '🌙', options: ['🌙', '⭐', '🔥'] },
+  { seq: ['🍥', '🍥', '🌸', '🍥', '🍥'], answer: '🌸', options: ['🍥', '🌸', '🍙'] },
+  { seq: ['🐾', '⛩️', '⛩️', '🐾', '⛩️'], answer: '⛩️', options: ['🐾', '⛩️', '🎏'] },
+];
+const ODD_SETS = [
+  { fill: '🍎', odd: '🐟', size: 6 },
+  { fill: '🌸', odd: '🍕', size: 6 },
+  { fill: '🐱', odd: '🦉', size: 6 },
+];
+const WORD_SETS = [
+  { prompt: 'Which word means “cat” in Japanese?', answer: 'neko', options: ['inu', 'neko', 'tori'] },
+  { prompt: 'Which word means “dream”?', answer: 'yume', options: ['yume', 'taberu', 'hashiru'] },
+  { prompt: 'Pick the word that matches the picture 🍜', answer: 'ramen', options: ['sushi', 'ramen', 'mochi'] },
+];
+
+function shuffled<T>(arr: T[]): T[] {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
 function HumanCheck({ onPass }: { onPass: () => void }) {
-  const [a] = useState(() => 2 + Math.floor(Math.random() * 7));
-  const [b] = useState(() => 1 + Math.floor(Math.random() * 8));
-  const [answer, setAnswer] = useState('');
+  const [kind] = useState<PuzzleKind>(() => (['icon', 'pattern', 'odd', 'word'] as const)[Math.floor(Math.random() * 4)]);
+  const [textMode, setTextMode] = useState(false);
   const [wrong, setWrong] = useState(false);
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (Number(answer) === a + b) {
-      setWrong(false);
-      onPass();
-    } else {
-      setWrong(true);
-      setAnswer('');
-    }
-  }
+  const [icon] = useState(() => {
+    const set = ICON_SETS[Math.floor(Math.random() * ICON_SETS.length)];
+    return { ...set, grid: shuffled(set.pool) };
+  });
+  const [pattern] = useState(() => PATTERNS[Math.floor(Math.random() * PATTERNS.length)]);
+  const [odd] = useState(() => {
+    const set = ODD_SETS[Math.floor(Math.random() * ODD_SETS.length)];
+    const at = Math.floor(Math.random() * set.size);
+    return { ...set, grid: Array.from({ length: set.size }, (_, i) => (i === at ? set.odd : set.fill)), at };
+  });
+  const [word] = useState(() => {
+    const set = WORD_SETS[Math.floor(Math.random() * WORD_SETS.length)];
+    return { ...set, options: shuffled(set.options) };
+  });
+  const [textWord] = useState(() => ['NEKO', 'HANA', 'SORA', 'YUKI'][Math.floor(Math.random() * 4)]);
+  const [textAnswer, setTextAnswer] = useState('');
 
-  return (
-    <form
-      onSubmit={submit}
-      className="mt-8 w-full rounded-2xl border border-line bg-card p-6 text-center"
-    >
+  const pick = (correct: boolean) => (correct ? onPass() : setWrong(true));
+
+  const frame = (children: React.ReactNode) => (
+    <div className="mt-8 w-full rounded-2xl border border-line bg-card p-6 text-center">
       <p className="font-display text-sm font-semibold">Quick human check</p>
       <p className="mt-1 text-xs text-ink-muted">
         Just so we know you're not a bot — no CAPTCHA farm required.
       </p>
-      <label htmlFor="puzzle" className="mt-5 block font-display text-2xl font-bold">
-        What is {a} + {b}?
-      </label>
-      <input
-        id="puzzle"
-        type="number"
-        inputMode="numeric"
-        required
-        value={answer}
-        onChange={(e) => setAnswer(e.target.value)}
-        className={`${inputCls} mx-auto mt-3 max-w-[140px] text-center text-lg`}
-        aria-describedby={wrong ? 'puzzle-error' : undefined}
-      />
+      <div className="mt-5">{children}</div>
       {wrong && (
-        <p id="puzzle-error" role="alert" className="mt-2 text-xs text-danger">
-          Not quite — try again.
+        <p role="alert" className="mt-3 text-xs text-danger">
+          Not quite — try another tile.
         </p>
       )}
       <button
-        type="submit"
-        className="mt-4 w-full rounded-xl bg-rose py-3 text-sm font-semibold text-white transition-colors hover:bg-rose-mid"
+        type="button"
+        onClick={() => setTextMode(true)}
+        className="mt-4 text-xs text-ink-muted underline-offset-2 hover:text-ink hover:underline"
       >
-        Continue
+        Can't do visual puzzles? Use a text question
       </button>
-    </form>
+    </div>
+  );
+
+  // Accessible alternative — a plain-text, screen-reader friendly challenge.
+  if (textMode) {
+    return (
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (textAnswer.trim().toUpperCase() === textWord) onPass();
+          else {
+            setWrong(true);
+            setTextAnswer('');
+          }
+        }}
+        className="mt-8 w-full rounded-2xl border border-line bg-card p-6 text-center"
+      >
+        <p className="font-display text-sm font-semibold">Quick human check</p>
+        <p className="mt-1 text-xs text-ink-muted">Text option — works with screen readers and keyboards.</p>
+        <label htmlFor="puzzle" className="mt-5 block text-sm">
+          Type this word: <span className="font-display text-xl font-bold tracking-[0.3em]">{textWord}</span>
+        </label>
+        <input
+          id="puzzle"
+          required
+          autoComplete="off"
+          value={textAnswer}
+          onChange={(e) => setTextAnswer(e.target.value)}
+          className={`${inputCls} mx-auto mt-3 max-w-[160px] text-center`}
+          aria-describedby={wrong ? 'puzzle-error' : undefined}
+        />
+        {wrong && (
+          <p id="puzzle-error" role="alert" className="mt-2 text-xs text-danger">
+            Doesn't match — try again.
+          </p>
+        )}
+        <button type="submit" className="mt-4 w-full rounded-xl bg-rose py-3 text-sm font-semibold text-white transition-colors hover:bg-rose-mid">
+          Continue
+        </button>
+      </form>
+    );
+  }
+
+  if (kind === 'icon') {
+    return frame(
+      <>
+        <p id="puzzle-prompt" className="font-display text-lg font-bold">Tap {icon.label}</p>
+        <div className="mt-4 grid grid-cols-3 gap-2" role="group" aria-describedby="puzzle-prompt">
+          {icon.grid.map((e, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => pick(e === icon.target)}
+              aria-label={`Option ${i + 1}`}
+              className="flex min-h-[56px] items-center justify-center rounded-xl border border-line bg-bg-alt text-2xl transition-all hover:border-rose hover:shadow-glow-sm"
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+      </>,
+    );
+  }
+
+  if (kind === 'pattern') {
+    return frame(
+      <>
+        <p id="puzzle-prompt" className="font-display text-lg font-bold">What comes next?</p>
+        <p className="mt-3 text-2xl tracking-widest" aria-label={`Pattern: ${pattern.seq.join(', ')}, blank`}>
+          {pattern.seq.join(' ')} <span className="text-ink-muted">?</span>
+        </p>
+        <div className="mt-4 flex justify-center gap-2" role="group" aria-describedby="puzzle-prompt">
+          {pattern.options.map((o) => (
+            <button
+              key={o}
+              type="button"
+              onClick={() => pick(o === pattern.answer)}
+              className="flex min-h-[56px] min-w-[56px] items-center justify-center rounded-xl border border-line bg-bg-alt text-2xl transition-all hover:border-rose hover:shadow-glow-sm"
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+      </>,
+    );
+  }
+
+  if (kind === 'odd') {
+    return frame(
+      <>
+        <p id="puzzle-prompt" className="font-display text-lg font-bold">Tap the one that's different</p>
+        <div className="mt-4 grid grid-cols-3 gap-2" role="group" aria-describedby="puzzle-prompt">
+          {odd.grid.map((e, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => pick(i === odd.at)}
+              aria-label={`Option ${i + 1}`}
+              className="flex min-h-[56px] items-center justify-center rounded-xl border border-line bg-bg-alt text-2xl transition-all hover:border-rose hover:shadow-glow-sm"
+            >
+              {e}
+            </button>
+          ))}
+        </div>
+      </>,
+    );
+  }
+
+  return frame(
+    <>
+      <p id="puzzle-prompt" className="font-display text-lg font-bold">{word.prompt}</p>
+      <div className="mt-4 flex flex-wrap justify-center gap-2" role="group" aria-describedby="puzzle-prompt">
+        {word.options.map((o) => (
+          <button
+            key={o}
+            type="button"
+            onClick={() => pick(o === word.answer)}
+            className="min-h-[48px] rounded-xl border border-line bg-bg-alt px-5 text-sm font-medium transition-all hover:border-rose hover:shadow-glow-sm"
+          >
+            {o}
+          </button>
+        ))}
+      </div>
+    </>,
   );
 }
 
@@ -346,14 +493,18 @@ function Disclaimer({ onAccept }: { onAccept: () => void }) {
       </h2>
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-ink-muted">
         <li>
-          Nekomo is an original <strong className="text-ink">demo web project</strong> — not
+          Nekomo is an <strong className="text-ink">open-source project</strong> — not
           affiliated with or linked to any app or existing platform.
         </li>
         <li>
-          We only ever embed video we own, license, or have explicit permission to show. No
-          unauthorized streams, ever — see the{' '}
+          Sources in the{' '}
+          <a href="/sources" className="text-rose-light hover:underline">
+            directory
+          </a>{' '}
+          are labeled by category. Non-official and custom sources are third-party services —
+          unverified and used at your own responsibility. Rights holders can use the{' '}
           <a href="/dmca" className="text-rose-light hover:underline">
-            DMCA &amp; copyright policy
+            DMCA &amp; copyright page
           </a>
           .
         </li>

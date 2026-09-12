@@ -41,6 +41,8 @@ export function VideoPlayer({
   const [buffering, setBuffering] = useState(false);
   const [showSkip, setShowSkip] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  // Survives the <video> remount on source switch — applied on loadeddata.
+  const pendingRestore = useRef<{ time: number; playing: boolean } | null>(null);
 
   const saveProgress = useStore((s) => s.saveProgress);
   const clearProgress = useStore((s) => s.clearProgress);
@@ -159,17 +161,12 @@ export function VideoPlayer({
 
   const switchQuality = (i: number) => {
     const v = videoRef.current;
-    if (!v) return;
-    const t = v.currentTime;
-    const wasPlaying = !v.paused;
+    if (!v || i === quality) return;
+    // Changing `quality` remounts <video> via key — stash the position so the
+    // onLoadedData handler on the NEW element can restore it.
+    pendingRestore.current = { time: v.currentTime, playing: !v.paused };
     setQuality(i);
-    // src swap happens via <source> key change — restore position on load
-    const onLoaded = () => {
-      v.currentTime = t;
-      if (wasPlaying) v.play();
-      v.removeEventListener('loadeddata', onLoaded);
-    };
-    v.addEventListener('loadeddata', onLoaded);
+    setLoadError(false);
   };
 
   const setSubtitle = (lang: string) => {
@@ -236,6 +233,14 @@ export function VideoPlayer({
         onPlaying={() => setBuffering(false)}
         onEnded={onEnded}
         onError={() => setLoadError(true)}
+        onLoadedData={() => {
+          const p = pendingRestore.current;
+          const v = videoRef.current;
+          if (!p || !v) return;
+          pendingRestore.current = null;
+          v.currentTime = p.time;
+          if (p.playing) v.play();
+        }}
       >
         {(stream.subtitles ?? []).map((s) => (
           <track
