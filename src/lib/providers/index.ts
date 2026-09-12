@@ -13,6 +13,7 @@ import type {
   TrailerEntry,
 } from '@/lib/types';
 import * as jikan from './jikan';
+import * as anilist from './anilist';
 import * as local from './local';
 import { getAuthorizedStreamFor } from './streaming';
 import { getFlags, getIntegration } from '@/lib/admin/store';
@@ -48,12 +49,17 @@ export async function getAnimeSearchResults(params: SearchParams): Promise<Searc
     return remote;
   } catch (err) {
     logProviderError('search', err);
-    return localOr(() => local.localSearch(params), {
-      items: [],
-      total: 0,
-      page: params.page ?? 1,
-      hasMore: false,
-    });
+    try {
+      return await anilist.search(params);
+    } catch (err2) {
+      logProviderError('search:anilist', err2);
+      return localOr(() => local.localSearch(params), {
+        items: [],
+        total: 0,
+        page: params.page ?? 1,
+        hasMore: false,
+      });
+    }
   }
 }
 
@@ -63,7 +69,12 @@ export async function getAnimeDetails(id: string): Promise<AnimeDetails | null> 
     return await jikan.details(id);
   } catch (err) {
     logProviderError(`details:${id}`, err);
-    return null;
+    try {
+      return await anilist.details(id);
+    } catch (err2) {
+      logProviderError(`details:${id}:anilist`, err2);
+      return null;
+    }
   }
 }
 
@@ -88,7 +99,12 @@ export async function getSeasonalAnime(season?: SeasonName, year?: number): Prom
     return items.length ? items : localOr(() => local.localSeasonal(season, year), []);
   } catch (err) {
     logProviderError('seasonal', err);
-    return localOr(() => local.localSeasonal(season, year), []);
+    try {
+      return await anilist.seasonal(season, year);
+    } catch (err2) {
+      logProviderError('seasonal:anilist', err2);
+      return localOr(() => local.localSeasonal(season, year), []);
+    }
   }
 }
 
@@ -99,7 +115,12 @@ export async function getTrendingAnime(): Promise<AnimeSummary[]> {
     return [...locals, ...items];
   } catch (err) {
     logProviderError('trending', err);
-    return localOr<AnimeSummary[]>(local.localTrending, []);
+    try {
+      return await anilist.top();
+    } catch (err2) {
+      logProviderError('trending:anilist', err2);
+      return localOr<AnimeSummary[]>(local.localTrending, []);
+    }
   }
 }
 
@@ -108,7 +129,12 @@ export async function getPopularAnime(): Promise<AnimeSummary[]> {
     return await jikan.top('bypopularity');
   } catch (err) {
     logProviderError('popular', err);
-    return localOr<AnimeSummary[]>(local.localTrending, []);
+    try {
+      return await anilist.top('bypopularity');
+    } catch (err2) {
+      logProviderError('popular:anilist', err2);
+      return localOr<AnimeSummary[]>(local.localTrending, []);
+    }
   }
 }
 
@@ -117,7 +143,12 @@ export async function getTopRatedAnime(): Promise<AnimeSummary[]> {
     return await jikan.top('favorite');
   } catch (err) {
     logProviderError('top-rated', err);
-    return localOr<AnimeSummary[]>(local.localTrending, []);
+    try {
+      return await anilist.top('favorite');
+    } catch (err2) {
+      logProviderError('top-rated:anilist', err2);
+      return localOr<AnimeSummary[]>(local.localTrending, []);
+    }
   }
 }
 
@@ -176,7 +207,11 @@ export async function getAnimeGenres(): Promise<GenreInfo[]> {
     return g.length ? g : localOr(local.localGenres, []);
   } catch (err) {
     logProviderError('genres', err);
-    return localOr(local.localGenres, []);
+    try {
+      return await anilist.genres();
+    } catch {
+      return localOr(local.localGenres, []);
+    }
   }
 }
 
