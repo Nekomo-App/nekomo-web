@@ -59,7 +59,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-line py-4 text-center text-xs text-ink-muted">
-        Nekomō — an original demo project. Not affiliated with any existing platform.
+        Nekomo — an original demo project. Not affiliated with any existing platform.
       </div>
     </footer>
   );

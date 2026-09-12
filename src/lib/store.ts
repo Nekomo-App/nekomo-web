@@ -8,6 +8,30 @@ import { persist } from 'zustand/middleware';
 import { useEffect, useState } from 'react';
 import type { AnimeSummary } from '@/lib/types';
 
+export interface ThemeSettings {
+  mode: 'dark' | 'light' | 'system';
+  accent: 'pink' | 'violet' | 'cyan' | 'magenta' | 'blue';
+  bg: 'default' | 'deep' | 'amoled';
+  card: 'default' | 'flat' | 'glass';
+  density: 'comfortable' | 'compact';
+  fontSize: 'small' | 'medium' | 'large';
+  animations: boolean;
+  reducedMotion: boolean;
+  blur: boolean;
+}
+
+export const DEFAULT_THEME: ThemeSettings = {
+  mode: 'dark',
+  accent: 'pink',
+  bg: 'default',
+  card: 'default',
+  density: 'comfortable',
+  fontSize: 'medium',
+  animations: true,
+  reducedMotion: false,
+  blur: true,
+};
+
 export interface WatchProgress {
   animeId: string;
   episodeId: string;
@@ -39,6 +63,7 @@ interface NekomoState {
   recentSearches: string[];
   autoplayNext: boolean;
   reducedMotion: boolean;
+  theme: ThemeSettings;
   profile: { name: string; email: string } | null;
   toggleWatchlist: (a: AnimeSummary) => boolean;
   inWatchlist: (id: string) => boolean;
@@ -50,6 +75,8 @@ interface NekomoState {
   addRecentSearch: (q: string) => void;
   setAutoplayNext: (v: boolean) => void;
   setReducedMotion: (v: boolean) => void;
+  setTheme: (patch: Partial<ThemeSettings>) => void;
+  resetTheme: () => void;
   setProfile: (p: { name: string; email: string } | null) => void;
   clearHistory: () => void;
   removeFromWatchlist: (id: string) => void;
@@ -68,6 +95,7 @@ export const useStore = create<NekomoState>()(
       recentSearches: [],
       autoplayNext: true,
       reducedMotion: false,
+      theme: DEFAULT_THEME,
       profile: null,
 
       toggleWatchlist: (a) => {
@@ -123,6 +151,13 @@ export const useStore = create<NekomoState>()(
 
       setAutoplayNext: (v) => set({ autoplayNext: v }),
       setReducedMotion: (v) => set({ reducedMotion: v }),
+      setTheme: (patch) => {
+        const next = { ...get().theme, ...patch };
+        set({ theme: next });
+        // keep legacy flag in sync for older components
+        set({ reducedMotion: next.reducedMotion || !next.animations });
+      },
+      resetTheme: () => set({ theme: DEFAULT_THEME, reducedMotion: false }),
       setProfile: (p) => set({ profile: p }),
       clearHistory: () => set({ history: [] }),
     }),

@@ -10,12 +10,12 @@ export default function DmcaPage() {
       <h1 className="font-display text-3xl font-bold">DMCA &amp; Copyright</h1>
       <div className="mt-4 space-y-3 text-sm leading-relaxed text-ink-muted">
         <p>
-          Nekomō only embeds video it owns, licenses, or has explicit permission to show.
+          Nekomo only embeds video it owns, licenses, or has explicit permission to show.
           We do not host, mirror, scrape, or link to unauthorized streams, and we respond to
           valid takedown notices.
         </p>
         <p>
-          If you are a rights holder (or authorized agent) and believe content on Nekomō
+          If you are a rights holder (or authorized agent) and believe content on Nekomo
           infringes your copyright, submit a notice below or email{' '}
           <a href={`mailto:${dmca}`} className="text-rose-light hover:underline">
             {dmca}
@@ -23,7 +23,7 @@ export default function DmcaPage() {
           .
         </p>
         <p>
-          Include: identification of the work, where it appears on Nekomō, your contact
+          Include: identification of the work, where it appears on Nekomo, your contact
           details, and a good-faith statement that the use is unauthorized.
         </p>
       </div>

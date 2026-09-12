@@ -97,7 +97,7 @@ export function ReportForm({
           className={inputCls}
           placeholder={
             kind === 'copyright'
-              ? 'Identify the work, where it appears on Nekomō, and confirm you are the rights holder or authorized agent…'
+              ? 'Identify the work, where it appears on Nekomo, and confirm you are the rights holder or authorized agent…'
               : 'How can we help?'
           }
         />

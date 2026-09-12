@@ -1,4 +1,4 @@
-// Original Nekomō logo — a simple cat-inspired mark, drawn for this project.
+// Original Nekomo logo — a simple cat-inspired mark, drawn for this project.
 
 export function Logo({ size = 34 }: { size?: number }) {
   return (

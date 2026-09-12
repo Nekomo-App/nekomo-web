@@ -1,6 +1,6 @@
-# Nekomō
+# Nekomo
 
-**Discover your next story.** Nekomō is an anime discovery and legally authorized streaming web app — a dark, cinematic, pink-accented catalog with watchlists, progress tracking, search, and a licensed-content-only video player.
+**Discover your next story.** Nekomo is an anime discovery and legally authorized streaming web app — a dark, cinematic, pink-accented catalog with watchlists, progress tracking, search, and a licensed-content-only video player.
 
 Built with Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, and Zustand.
 
@@ -24,7 +24,7 @@ npm run typecheck  # tsc --noEmit
 ## What works out of the box
 
 - **No API key needed.** Metadata comes from the free, documented [Jikan API](https://docs.api.jikan.moe) (MyAnimeList data). Every provider call runs server-side with throttling (Jikan's 3 req/s limit), request timeouts, retries, TTL caching, and a circuit breaker.
-- **Works offline too.** If Jikan is unreachable, the app falls back to a bundled catalog of original Nekomō titles so the UI stays fully usable. A small banner notes when you're viewing fallback data.
+- **Works offline too.** If Jikan is unreachable, the app falls back to a bundled catalog of original Nekomo titles so the UI stays fully usable. A small banner notes when you're viewing fallback data.
 - **Watchlist / history / progress / ratings** persist in `localStorage` — no account required.
 
 ## Pages
@@ -58,9 +58,9 @@ npm run typecheck  # tsc --noEmit
 
 ## Legal streaming policy
 
-Nekomō **never** embeds unauthorized video. `getAuthorizedStreamingSources()` only returns streams Nekomō owns, licenses, or has explicit permission to embed:
+Nekomo **never** embeds unauthorized video. `getAuthorizedStreamingSources()` only returns streams Nekomo owns, licenses, or has explicit permission to embed:
 
-- **Nekomō Originals** episodes stream Creative Commons–licensed films (© Blender Foundation, CC-BY) hosted as public sample media — explicitly cleared for embedding.
+- **Nekomo Originals** episodes stream Creative Commons–licensed films (© Blender Foundation, CC-BY) hosted as public sample media — explicitly cleared for embedding.
 - Everything else shows the official trailer (YouTube `youtube-nocookie` embed, ID supplied by the metadata provider) plus links to licensed platforms (Crunchyroll, HIDIVE, Netflix …) — never scraped players, torrents, or DRM bypasses.
 
 ## Architecture
@@ -73,7 +73,7 @@ src/
     providers/
       index.ts          facade — the only module pages call
       jikan.ts          remote metadata provider (throttled, cached, retries, circuit breaker)
-      local.ts          bundled fallback catalog + Nekomō Originals
+      local.ts          bundled fallback catalog + Nekomo Originals
       streaming.ts      authorized-stream resolution + official links
     cache.ts            in-memory TTL cache
     ratelimit.ts        API-route rate limiter

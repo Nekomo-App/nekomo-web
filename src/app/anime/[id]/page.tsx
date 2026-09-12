@@ -201,7 +201,7 @@ export default async function AnimePage({ params }: { params: { id: string } }) 
                     content: (
                       <div className="max-w-xl">
                         <p className="mb-4 text-sm text-ink-muted">
-                          Nekomō only links to authorized platforms. We never mirror or proxy
+                          Nekomo only links to authorized platforms. We never mirror or proxy
                           unauthorized streams.
                         </p>
                         <StreamingLinks links={links} />

@@ -25,7 +25,7 @@ export interface QualitySource {
 }
 
 /**
- * A stream Nekomō owns, licenses, or has explicit permission to embed.
+ * A stream Nekomo owns, licenses, or has explicit permission to embed.
  * Never produced for unauthorized sources — when none exists the UI
  * shows official viewing links instead.
  */

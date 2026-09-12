@@ -2,46 +2,168 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------- Theme tokens ----------
+   Every value is an RGB triplet consumed via rgb(var(--x) / alpha).
+   Variants: [data-theme], [data-accent], [data-bg], [data-card],
+   [data-density], [data-blur], [data-motion], html font-size. */
+
 :root {
-  --rose: #d92b83;
+  /* Nekomo dark (default) */
+  --bg: 16 10 18;
+  --bg-alt: 27 16 27;
+  --card: 38 19 35;
+  --line: 66 36 58;
+  --ink: 247 239 245;
+  --ink-muted: 189 169 184;
+  --accent: 217 43 131;
+  --accent-dark: 122 23 79;
+  --accent-mid: 142 42 104;
+  --accent-light: 244 167 205;
+  --success: 88 214 141;
+  --warn: 245 185 66;
+  --danger: 255 101 119;
+  --radius: 12px;
+  --glass-bg: 38 19 35;
+  --glass-alpha: 0.55;
+  --grid-gap: 1rem;
 }
+
+/* Light theme — keeps readable contrast, white surfaces, dark text. */
+html[data-theme='light'] {
+  --bg: 247 242 246;
+  --bg-alt: 255 255 255;
+  --card: 255 255 255;
+  --line: 226 209 219;
+  --ink: 43 24 38;
+  --ink-muted: 122 100 114;
+  --accent: 190 24 110;
+  --accent-dark: 122 23 79;
+  --accent-mid: 142 42 104;
+  --accent-light: 217 43 131;
+  --glass-bg: 255 255 255;
+  --glass-alpha: 0.7;
+}
+
+/* Background intensity (dark themes) */
+html[data-bg='deep'] {
+  --bg: 24 15 27;
+  --bg-alt: 35 23 38;
+  --card: 48 28 45;
+}
+html[data-bg='amoled'] {
+  --bg: 0 0 0;
+  --bg-alt: 10 7 11;
+  --card: 18 12 18;
+  --line: 52 28 46;
+}
+html[data-bg='amoled'][data-theme='light'] {
+  /* AMOLED is meaningless in light mode — fall back to light bg. */
+  --bg: 247 242 246;
+  --bg-alt: 255 255 255;
+  --card: 255 255 255;
+  --line: 226 209 219;
+}
+
+/* Accent palettes */
+html[data-accent='pink'] {
+  --accent: 217 43 131;
+  --accent-dark: 122 23 79;
+  --accent-mid: 142 42 104;
+  --accent-light: 244 167 205;
+}
+html[data-accent='violet'] {
+  --accent: 139 92 246;
+  --accent-dark: 76 29 149;
+  --accent-mid: 109 40 217;
+  --accent-light: 196 181 253;
+}
+html[data-accent='cyan'] {
+  --accent: 34 211 238;
+  --accent-dark: 21 94 117;
+  --accent-mid: 8 145 178;
+  --accent-light: 165 243 252;
+}
+html[data-accent='magenta'] {
+  --accent: 217 70 239;
+  --accent-dark: 112 26 117;
+  --accent-mid: 162 28 175;
+  --accent-light: 245 208 254;
+}
+html[data-accent='blue'] {
+  --accent: 59 130 246;
+  --accent-dark: 30 58 138;
+  --accent-mid: 29 78 216;
+  --accent-light: 147 197 253;
+}
+
+/* Card style */
+html[data-card='flat'] {
+  --radius: 6px;
+}
+html[data-card='glass'] {
+  --card: 44 24 41;
+}
+html[data-theme='light'][data-card='glass'] {
+  --card: 252 247 251;
+}
+
+/* Density */
+html[data-density='compact'] {
+  --grid-gap: 0.6rem;
+}
+html[data-density='compact'] .grid.gap-4 {
+  gap: var(--grid-gap);
+}
+
+/* Blur control */
+html[data-blur='off'] .glass {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgb(var(--glass-bg) / 0.96);
+}
+
+/* ---------- Base ---------- */
 
 html {
   scroll-behavior: smooth;
+  font-size: var(--font-scale, 16px);
 }
 
 body {
   @apply bg-bg text-ink font-sans antialiased;
   overflow-x: clip;
   background-image:
-    radial-gradient(1200px 500px at 80% -10%, rgba(122, 23, 79, 0.22), transparent 60%),
-    radial-gradient(900px 400px at -10% 20%, rgba(142, 42, 104, 0.14), transparent 60%);
+    radial-gradient(1200px 500px at 80% -10%, rgb(var(--accent-dark) / 0.22), transparent 60%),
+    radial-gradient(900px 400px at -10% 20%, rgb(var(--accent-mid) / 0.14), transparent 60%);
   background-attachment: fixed;
+}
+html[data-theme='light'] body {
+  background-image:
+    radial-gradient(1200px 500px at 80% -10%, rgb(var(--accent) / 0.07), transparent 60%),
+    radial-gradient(900px 400px at -10% 20%, rgb(var(--accent-mid) / 0.05), transparent 60%);
 }
 
 ::selection {
-  background: rgba(217, 43, 131, 0.45);
-  color: #fff;
+  background: rgb(var(--accent) / 0.45);
+  color: rgb(var(--ink));
 }
 
-/* Focus visibility for keyboard users */
 :focus-visible {
-  outline: 2px solid var(--rose);
+  outline: 2px solid rgb(var(--accent));
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Slim, themed scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #42243a transparent;
+  scrollbar-color: rgb(var(--line)) transparent;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #42243a;
+  background: rgb(var(--line));
   border-radius: 8px;
 }
 *::-webkit-scrollbar-track {
@@ -56,24 +178,24 @@ body {
 }
 
 .glass {
-  background: rgba(38, 19, 35, 0.55);
+  background: rgb(var(--glass-bg) / var(--glass-alpha));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(66, 36, 58, 0.8);
+  border: 1px solid rgb(var(--line) / 0.8);
 }
 
 /* Skeleton shimmer */
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: #261323;
+  background: rgb(var(--card));
 }
 .skeleton::after {
   content: '';
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(244, 167, 205, 0.08), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--accent-light) / 0.08), transparent);
   animation: shimmer 1.6s infinite;
 }
 @keyframes shimmer {
@@ -82,7 +204,6 @@ body {
   }
 }
 
-/* Poster fade-in once the image loads */
 .poster-img {
   opacity: 0;
   transition: opacity 0.45s ease;
@@ -91,7 +212,6 @@ body {
   opacity: 1;
 }
 
-/* Line clamp helpers */
 .clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -105,9 +225,14 @@ body {
   overflow: hidden;
 }
 
-/* Video player control fade */
 .vp-controls {
   transition: opacity 0.3s ease;
+}
+
+/* Protected media: images/posters may opt out of context menu + drag. */
+.protected-media {
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 /* Safe-area helpers for notched phones */
@@ -129,7 +254,7 @@ body {
   }
 }
 
-/* Reduced motion: honor the OS setting + user toggle */
+/* Reduced motion: honor the OS setting + user toggles */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

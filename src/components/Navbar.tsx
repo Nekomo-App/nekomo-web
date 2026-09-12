@@ -125,7 +125,7 @@ export function Navbar() {
         )}
       >
         <nav className="mx-auto flex h-16 max-w-[1560px] items-center gap-3 px-4 safe-x sm:px-6">
-          <Link href="/" aria-label="Nekomō home" className="shrink-0">
+          <Link href="/" aria-label="Nekomo home" className="shrink-0">
             <Logo />
           </Link>
 
@@ -268,6 +268,7 @@ export function Navbar() {
                     {[
                       { href: '/watchlist', label: 'My Watchlist' },
                       { href: '/history', label: 'Watch History' },
+                      { href: '/settings', label: 'Settings' },
                       { href: '/search', label: 'Search' },
                     ].map((i) => (
                       <Link
@@ -370,6 +371,7 @@ export function Navbar() {
                   { href: '/genres', label: 'Genres' },
                   { href: '/watchlist', label: 'Watchlist' },
                   { href: '/history', label: 'History' },
+                  { href: '/settings', label: 'Settings' },
                   { href: '/login', label: hydrated && profile ? 'Account' : 'Sign in' },
                 ].map((l, i) => (
                   <motion.div
