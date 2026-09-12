@@ -13,6 +13,7 @@ import { Tabs } from '@/components/Tabs';
 import { TrackView } from '@/components/TrackView';
 import { RatingWidget } from '@/components/RatingWidget';
 import { Synopsis } from '@/components/Synopsis';
+import { Comments } from '@/components/Comments';
 
 export const dynamic = 'force-dynamic';
 
@@ -190,10 +191,15 @@ export default async function AnimePage({ params }: { params: { id: string } }) 
                           <RatingWidget animeId={anime.id} large />
                         </div>
                         <p className="text-xs text-ink-muted">
-                          Written reviews are disabled in this build — ratings only.
+                          Community ratings are stored on this device.
                         </p>
                       </div>
                     ),
+                  },
+                  {
+                    id: 'comments',
+                    label: 'Comments',
+                    content: <Comments animeId={anime.id} />,
                   },
                   {
                     id: 'streaming',

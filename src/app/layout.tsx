@@ -11,6 +11,21 @@ export const metadata: Metadata = {
   description:
     'Nekomo is an anime discovery platform with legally authorized streaming. Browse, track, and watch from official sources.',
   metadataBase: new URL(process.env.SITE_URL || 'http://localhost:3000'),
+  applicationName: 'Nekomo',
+  openGraph: {
+    siteName: 'Nekomo',
+    title: 'Nekomo — Discover your next story',
+    description:
+      'Anime discovery and legally authorized streaming. Browse, track, and watch from official sources.',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Nekomo — Discover your next story',
+    description: 'Anime discovery and legally authorized streaming.',
+  },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -43,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
             {children}
           </main>
-          <Footer />
+          <Footer dmcaEmail={process.env.DMCA_CONTACT_EMAIL} />
           <Toaster />
           <ScrollToTop />
         </ThemeProvider>

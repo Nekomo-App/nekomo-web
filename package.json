@@ -2,12 +2,13 @@
   "name": "nekomo-web",
   "version": "0.1.0",
   "private": true,
-  "description": "Nekomō — discover your next story. Anime discovery and legally authorized streaming.",
+  "description": "Nekomo — discover your next story. Anime discovery and legally authorized streaming.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "start": "next start"
   },
   "dependencies": {
     "framer-motion": "^11.11.0",
@@ -23,6 +24,7 @@
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.45",
     "tailwindcss": "^3.4.10",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^2.1.9"
   }
 }

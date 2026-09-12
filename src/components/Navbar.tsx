@@ -5,16 +5,20 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Logo } from './Logo';
+import { NotificationBell } from './NotificationBell';
 import { cn } from '@/lib/utils';
 import { useHydrated, useStore } from '@/lib/store';
+import { useT } from '@/lib/i18n';
 import { toast } from './Toaster';
 
 const LINKS = [
-  { href: '/', label: 'Home' },
-  { href: '/browse', label: 'Browse' },
-  { href: '/seasonal', label: 'Seasonal' },
-  { href: '/schedule', label: 'Schedule' },
-];
+  { href: '/', labelKey: 'nav.home' },
+  { href: '/browse', labelKey: 'nav.browse' },
+  { href: '/seasonal', labelKey: 'nav.seasonal' },
+  { href: '/schedule', labelKey: 'nav.schedule' },
+] as const;
+
+type NavKey = (typeof LINKS)[number]['labelKey'];
 
 const POPULAR_GENRES = [
   'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 'Horror',
@@ -22,11 +26,11 @@ const POPULAR_GENRES = [
 ];
 
 const BOTTOM_NAV = [
-  { href: '/', label: 'Home', icon: 'M3 10.5 12 3l9 7.5V21H3z' },
-  { href: '/search', label: 'Search', icon: 'M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm10 2-4.3-4.3' },
-  { href: '/schedule', label: 'Schedule', icon: 'M8 2v4M16 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z' },
-  { href: '/watchlist', label: 'Watchlist', icon: 'M6 3h12v18l-6-4-6 4z' },
-];
+  { href: '/', labelKey: 'nav.home', icon: 'M3 10.5 12 3l9 7.5V21H3z' },
+  { href: '/search', labelKey: 'nav.search', icon: 'M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16zm10 2-4.3-4.3' },
+  { href: '/schedule', labelKey: 'nav.schedule', icon: 'M8 2v4M16 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z' },
+  { href: '/watchlist', labelKey: 'nav.watchlist', icon: 'M6 3h12v18l-6-4-6 4z' },
+] as const;
 
 export function Navbar() {
   const pathname = usePathname();
@@ -43,6 +47,7 @@ export function Navbar() {
   const setReducedMotion = useStore((s) => s.setReducedMotion);
   const profile = useStore((s) => s.profile);
   const hydrated = useHydrated();
+  const t = useT();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -131,7 +136,7 @@ export function Navbar() {
 
           <div className="hidden items-center gap-0.5 lg:flex xl:gap-1">
             {LINKS.slice(0, 2).map((l) => (
-              <NavLink key={l.href} href={l.href} label={l.label} pathname={pathname} />
+              <NavLink key={l.href} href={l.href} label={t(l.labelKey)} pathname={pathname} />
             ))}
 
             {/* Genres dropdown */}
@@ -145,7 +150,7 @@ export function Navbar() {
                   pathname === '/genres' && 'text-rose-light',
                 )}
               >
-                Genres
+                {t('nav.genres')}
                 <motion.svg
                   width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
                   animate={{ rotate: genresOpen ? 180 : 0 }}
@@ -181,7 +186,7 @@ export function Navbar() {
                       role="menuitem"
                       className="block border-t border-line px-4 py-2.5 text-sm font-medium text-rose-light transition-colors hover:bg-rose/10"
                     >
-                      All genres →
+                      {t('nav.allGenres')}
                     </Link>
                   </motion.div>
                 )}
@@ -189,7 +194,7 @@ export function Navbar() {
             </div>
 
             {LINKS.slice(2).map((l) => (
-              <NavLink key={l.href} href={l.href} label={l.label} pathname={pathname} />
+              <NavLink key={l.href} href={l.href} label={t(l.labelKey)} pathname={pathname} />
             ))}
           </div>
 
@@ -200,7 +205,7 @@ export function Navbar() {
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   type="search"
-                  placeholder="Search anime…"
+                  placeholder={t('nav.searchPlaceholder')}
                   aria-label="Search anime"
                   className="h-10 w-40 rounded-full border border-line bg-bg-alt/80 pl-9 pr-3 text-sm text-ink placeholder:text-ink-muted/60 transition-all focus:w-60 focus:border-rose focus:shadow-glow-sm focus:outline-none xl:w-48"
                 />
@@ -221,7 +226,7 @@ export function Navbar() {
                 pathname === '/watchlist' && 'text-rose-light',
               )}
             >
-              Watchlist
+              {t('nav.watchlist')}
             </Link>
             <Link
               href="/history"
@@ -230,8 +235,10 @@ export function Navbar() {
                 pathname === '/history' && 'text-rose-light',
               )}
             >
-              History
+              {t('nav.history')}
             </Link>
+
+            <NotificationBell />
 
             {/* Account menu */}
             <div className="relative" ref={accountRef}>
@@ -265,19 +272,19 @@ export function Navbar() {
                         {hydrated && profile ? profile.email : 'Local profile — no sign-in needed'}
                       </p>
                     </div>
-                    {[
-                      { href: '/watchlist', label: 'My Watchlist' },
-                      { href: '/history', label: 'Watch History' },
-                      { href: '/settings', label: 'Settings' },
-                      { href: '/search', label: 'Search' },
-                    ].map((i) => (
+                    {([
+                      { href: '/watchlist', key: 'nav.watchlist' },
+                      { href: '/history', key: 'nav.history' },
+                      { href: '/settings', key: 'nav.settings' },
+                      { href: '/search', key: 'nav.search' },
+                    ] as const).map((i) => (
                       <Link
                         key={i.href}
                         href={i.href}
                         role="menuitem"
                         className="block px-4 py-2.5 text-sm text-ink-muted transition-colors hover:bg-rose/10 hover:text-white"
                       >
-                        {i.label}
+                        {t(i.key)}
                       </Link>
                     ))}
                     <button
@@ -289,7 +296,7 @@ export function Navbar() {
                       aria-pressed={reducedMotion}
                       className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-ink-muted transition-colors hover:bg-rose/10 hover:text-white"
                     >
-                      Reduced motion
+                      {t('nav.reducedMotion')}
                       <span className={cn('h-4 w-8 rounded-full p-0.5 transition-colors', reducedMotion ? 'bg-rose' : 'bg-line')}>
                         <span className={cn('block h-3 w-3 rounded-full bg-white transition-transform', reducedMotion && 'translate-x-4')} />
                       </span>
@@ -299,7 +306,7 @@ export function Navbar() {
                       role="menuitem"
                       className="block w-full px-4 py-2.5 text-left text-sm text-rose-light transition-colors hover:bg-rose/10"
                     >
-                      {hydrated && profile ? 'Account' : 'Sign in'}
+                      {hydrated && profile ? t('nav.account') : t('nav.signIn')}
                     </Link>
                   </motion.div>
                 )}
@@ -366,14 +373,14 @@ export function Navbar() {
                 </button>
               </div>
               <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
-                {[
+                {([
                   ...LINKS,
-                  { href: '/genres', label: 'Genres' },
-                  { href: '/watchlist', label: 'Watchlist' },
-                  { href: '/history', label: 'History' },
-                  { href: '/settings', label: 'Settings' },
-                  { href: '/login', label: hydrated && profile ? 'Account' : 'Sign in' },
-                ].map((l, i) => (
+                  { href: '/genres', labelKey: 'nav.genres' },
+                  { href: '/watchlist', labelKey: 'nav.watchlist' },
+                  { href: '/history', labelKey: 'nav.history' },
+                  { href: '/settings', labelKey: 'nav.settings' },
+                  { href: '/login', labelKey: (hydrated && profile ? 'nav.account' : 'nav.signIn') as NavKey },
+                ] as const).map((l, i) => (
                   <motion.div
                     key={l.href}
                     initial={{ opacity: 0, x: 24 }}
@@ -388,13 +395,13 @@ export function Navbar() {
                         pathname === l.href && 'bg-rose/15 text-rose-light',
                       )}
                     >
-                      {l.label}
+                      {t(l.labelKey)}
                     </Link>
                   </motion.div>
                 ))}
               </nav>
               <div className="border-t border-line p-4 text-xs text-ink-muted safe-b">
-                Discover your next story.
+                {t('footer.tagline')}
               </div>
             </motion.aside>
           </>
@@ -426,7 +433,7 @@ export function Navbar() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d={i.icon} />
             </svg>
-            {i.label}
+            {t(i.labelKey)}
           </Link>
         ))}
         <Link
@@ -448,7 +455,7 @@ export function Navbar() {
             <circle cx="12" cy="8" r="4" />
             <path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
           </svg>
-          Account
+          {t('nav.account')}
         </Link>
       </nav>
 

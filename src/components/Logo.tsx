@@ -42,8 +42,8 @@ export function Logo({ size = 34 }: { size?: number }) {
         <path d="M40 30 Q36 31 33 30.6" stroke="#100A12" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
         <path d="M40 34 Q36 34.4 33 33.6" stroke="#100A12" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
       </svg>
-      <span className="font-display text-2xl font-bold tracking-tight text-white">
-        Nekom<span className="text-rose">ō</span>
+      <span className="font-display text-2xl font-bold tracking-tight text-ink">
+        Nekom<span className="text-rose">o</span>
       </span>
     </span>
   );

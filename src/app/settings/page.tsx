@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useId } from 'react';
 import { DEFAULT_THEME, useHydrated, useStore, type ThemeSettings } from '@/lib/store';
+import { LANGS, useT, type Lang } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/Toaster';
 import { Poster } from '@/components/Poster';
@@ -22,19 +23,43 @@ export default function SettingsPage() {
   const theme = useStore((s) => s.theme);
   const setTheme = useStore((s) => s.setTheme);
   const resetTheme = useStore((s) => s.resetTheme);
+  const language = useStore((s) => s.language);
+  const setLanguage = useStore((s) => s.setLanguage);
   const t = { ...DEFAULT_THEME, ...theme };
+  const i = useT();
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <h1 className="font-display text-3xl font-bold">Settings</h1>
+      <h1 className="font-display text-3xl font-bold">{i('settings.title')}</h1>
       <p className="mt-1 text-sm text-ink-muted">
-        Appearance applies instantly and persists on this device.
+        {i('settings.subtitle')}
         {!hydrated && ' Loading…'}
       </p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-6">
-          <Section title="Theme mode">
+          <Section title={i('settings.language')} hint={i('settings.languageHint')}>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={i('settings.language')}>
+              {LANGS.map((l) => (
+                <button
+                  key={l.id}
+                  role="radio"
+                  aria-checked={language === l.id}
+                  onClick={() => setLanguage(l.id as Lang)}
+                  className={cn(
+                    'min-h-[44px] rounded-full border px-4 py-2 text-sm transition-colors',
+                    language === l.id
+                      ? 'border-rose bg-rose/15 text-ink shadow-glow-sm'
+                      : 'border-line text-ink-muted hover:border-rose/50',
+                  )}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </Section>
+
+          <Section title={i('settings.themeMode')}>
             <Segmented
               value={t.mode}
               onChange={(v) => setTheme({ mode: v as ThemeSettings['mode'] })}
@@ -46,7 +71,7 @@ export default function SettingsPage() {
             />
           </Section>
 
-          <Section title="Accent color">
+          <Section title={i('settings.accent')}>
             <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Accent color">
               {ACCENTS.map((a) => (
                 <button
@@ -68,7 +93,7 @@ export default function SettingsPage() {
             </div>
           </Section>
 
-          <Section title="Background intensity" hint="AMOLED uses pure black — great for OLED screens.">
+          <Section title={i('settings.background')} hint="AMOLED uses pure black — great for OLED screens.">
             <Segmented
               value={t.bg}
               onChange={(v) => setTheme({ bg: v as ThemeSettings['bg'] })}
@@ -80,7 +105,7 @@ export default function SettingsPage() {
             />
           </Section>
 
-          <Section title="Card style">
+          <Section title={i('settings.cardStyle')}>
             <Segmented
               value={t.card}
               onChange={(v) => setTheme({ card: v as ThemeSettings['card'] })}
@@ -92,7 +117,7 @@ export default function SettingsPage() {
             />
           </Section>
 
-          <Section title="Density">
+          <Section title={i('settings.density')}>
             <Segmented
               value={t.density}
               onChange={(v) => setTheme({ density: v as ThemeSettings['density'] })}
@@ -103,7 +128,7 @@ export default function SettingsPage() {
             />
           </Section>
 
-          <Section title="Font size">
+          <Section title={i('settings.fontSize')}>
             <Segmented
               value={t.fontSize}
               onChange={(v) => setTheme({ fontSize: v as ThemeSettings['fontSize'] })}
@@ -115,7 +140,7 @@ export default function SettingsPage() {
             />
           </Section>
 
-          <Section title="Motion & effects">
+          <Section title={i('settings.motion')}>
             <div className="space-y-3">
               <Toggle
                 label="Interface animations"
@@ -145,14 +170,14 @@ export default function SettingsPage() {
             }}
             className="min-h-[44px] rounded-xl border border-danger/40 px-5 py-2.5 text-sm font-medium text-danger transition-colors hover:bg-danger/10"
           >
-            Reset to defaults
+            {i('settings.reset')}
           </button>
         </div>
 
         {/* Live preview */}
         <aside className="lg:sticky lg:top-20 lg:h-fit">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-muted">
-            Preview
+            {i('settings.preview')}
           </h2>
           <motion.div layout className="overflow-hidden rounded-2xl border border-line bg-card">
             <div className="flex gap-3 p-4">

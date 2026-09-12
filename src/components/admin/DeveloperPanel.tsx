@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/Toaster';
+import { useStore } from '@/lib/store';
 
 interface Health {
   uptimeSec: number;
@@ -146,6 +147,15 @@ export function DeveloperPanel() {
               className="min-h-[44px] rounded-xl border border-line px-4 py-2 text-sm text-ink-muted hover:border-rose hover:text-ink"
             >
               Refresh health
+            </button>
+            <button
+              onClick={() => {
+                useStore.getState().notify('Test notification', 'Sent from developer tools');
+                toast('Test notification sent', 'success');
+              }}
+              className="min-h-[44px] rounded-xl border border-line px-4 py-2 text-sm text-ink-muted hover:border-rose hover:text-ink"
+            >
+              Send test notification
             </button>
           </div>
           <p className="mt-3 text-xs text-ink-muted">

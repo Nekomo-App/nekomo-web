@@ -6,9 +6,14 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const startedAt = Date.now();
-const version = JSON.parse(
-  readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'),
-).version as string;
+let version = '0.0.0';
+try {
+  version = JSON.parse(
+    readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'),
+  ).version;
+} catch {
+  // package.json unavailable in some serverless bundles — non-fatal
+}
 
 /** System health for the admin dashboard. Admin-only. */
 export async function GET() {

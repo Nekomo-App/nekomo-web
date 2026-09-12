@@ -38,9 +38,11 @@ export function Poster({
           alt={title}
           loading={priority ? 'eager' : 'lazy'}
           sizes={sizes}
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
           onLoad={() => setLoaded(true)}
           onError={() => setFailed(true)}
-          className={cn('poster-img h-full w-full object-cover', loaded && 'loaded')}
+          className={cn('poster-img protected-media h-full w-full object-cover', loaded && 'loaded')}
         />
       )}
     </div>

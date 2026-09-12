@@ -14,6 +14,7 @@ const FONT_SCALE: Record<ThemeSettings['fontSize'], string> = {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const theme = useStore((s) => s.theme);
   const reducedMotion = useStore((s) => s.reducedMotion);
+  const language = useStore((s) => s.language);
   const [systemLight, setSystemLight] = useState(false);
 
   // Track OS preference for mode: 'system'
@@ -38,6 +39,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     el.dataset.motion = reducedMotion || !t.animations ? 'reduced' : 'full';
     el.style.setProperty('--font-scale', FONT_SCALE[t.fontSize]);
   }, [theme, reducedMotion, systemLight]);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const motionReduced = reducedMotion || !theme.animations;
 
