@@ -26,3 +26,11 @@ export async function cached<T>(
 export function cacheBust(prefix: string): void {
   for (const k of Array.from(store.keys())) if (k.startsWith(prefix)) store.delete(k);
 }
+
+export function cacheStats(): { size: number; max: number } {
+  return { size: store.size, max: MAX_KEYS };
+}
+
+export function cacheClear(): void {
+  store.clear();
+}

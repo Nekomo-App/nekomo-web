@@ -3,6 +3,7 @@
 // rate limit (3 req/s, 60 req/min), timed out, retried once, and cached.
 
 import { cached } from '@/lib/cache';
+import { getIntegration, recordIntegrationEvent } from '@/lib/admin/store';
 import { sleep } from '@/lib/utils';
 import type {
   AnimeDetails,
@@ -43,12 +44,14 @@ const CIRCUIT_COOLDOWN_MS = 90_000;
 function circuitOpen(): boolean {
   return consecutiveFailures >= CIRCUIT_THRESHOLD && Date.now() < circuitOpenUntil;
 }
-function recordSuccess() {
+function recordSuccess(latencyMs?: number) {
   consecutiveFailures = 0;
+  recordIntegrationEvent('jikan', true, latencyMs);
 }
-function recordFailure() {
+function recordFailure(err?: unknown) {
   consecutiveFailures += 1;
   if (consecutiveFailures >= CIRCUIT_THRESHOLD) circuitOpenUntil = Date.now() + CIRCUIT_COOLDOWN_MS;
+  recordIntegrationEvent('jikan', false, undefined, err instanceof Error ? err.message : 'unknown');
 }
 
 // Serial request queue to enforce the throttle interval.
@@ -68,6 +71,9 @@ function throttled<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 async function jikanFetch<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
+  if (getIntegration('jikan')?.enabled === false) {
+    throw new ProviderError('Jikan disabled by administrator');
+  }
   if (circuitOpen()) {
     throw new ProviderError('Jikan circuit open — provider marked down');
   }
@@ -80,6 +86,7 @@ async function jikanFetch<T>(path: string, params?: Record<string, string | numb
     let lastErr: unknown;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
+        const start = Date.now();
         const res = await fetch(url.toString(), {
           signal: AbortSignal.timeout(TIMEOUT_MS),
           headers: {
@@ -96,7 +103,7 @@ async function jikanFetch<T>(path: string, params?: Record<string, string | numb
         if (!res.ok) {
           throw new ProviderError(`Jikan responded ${res.status}`, res.status);
         }
-        recordSuccess();
+        recordSuccess(Date.now() - start);
         return (await res.json()) as T;
       } catch (err) {
         lastErr = err;
@@ -107,7 +114,7 @@ async function jikanFetch<T>(path: string, params?: Record<string, string | numb
         if (attempt === 0) await sleep(1200);
       }
     }
-    recordFailure();
+    recordFailure(lastErr);
     throw lastErr instanceof Error ? lastErr : new ProviderError('Jikan request failed');
   });
 }

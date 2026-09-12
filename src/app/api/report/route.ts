@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { reportBrokenSource } from '@/lib/providers';
 import { getReports, resolveReport } from '@/lib/reports';
 import { rateLimit } from '@/lib/ratelimit';
+import { isAdmin } from '@/lib/auth';
+import { audit } from '@/lib/admin/store';
 import type { ReportKind } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -43,14 +45,17 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ ok: true });
 }
 
-/** Demo admin feed — no auth in this build. */
+/** Report feed — admin only. */
 export async function GET() {
+  if (!isAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   return NextResponse.json(getReports());
 }
 
-/** Mark a report resolved: POST /api/report/resolve?id=... via PATCH here. */
+/** Mark a report resolved — admin only. */
 export async function PATCH(req: NextRequest) {
+  if (!isAdmin()) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const id = req.nextUrl.searchParams.get('id') ?? '';
   if (!resolveReport(id)) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  audit('report.resolve', id);
   return NextResponse.json({ ok: true });
 }
