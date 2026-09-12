@@ -2,6 +2,11 @@
 
 **Discover your next story.** Nekomo is an anime discovery and legally authorized streaming web app — a dark-first, pink-accented catalog with watchlists, progress tracking, search, a licensed-content-only video player, themeable UI, and an admin/developer area for source and API management.
 
+**Live demo:** https://nekomo.netlify.app/
+
+> **Note:** This is a web project. It is not affiliated with or linked to any
+> Nekomo app or other existing platform.
+
 Built with Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, and Zustand.
 
 ## Quick start
@@ -46,8 +51,8 @@ for persistent admin state.
 
 ## What works out of the box
 
-- **No API key needed.** Metadata comes from the free, documented [Jikan API](https://docs.api.jikan.moe) (MyAnimeList data). Every provider call runs server-side with throttling (Jikan's 3 req/s limit), request timeouts, retries, TTL caching, and a circuit breaker.
-- **Works offline too.** If Jikan is unreachable, the app falls back to a bundled catalog of original Nekomo titles so the UI stays fully usable.
+- **No API key needed.** Metadata comes from the free, documented [Jikan API](https://docs.api.jikan.moe) (MyAnimeList data), with the free, open [AniList GraphQL API](https://docs.anilist.co/) as automatic fallback. Every provider call runs server-side with throttling, request timeouts, TTL caching, and a circuit breaker.
+- **Works offline too.** If all remote providers are unreachable, the app falls back to a bundled catalog of original Nekomo titles so the UI stays fully usable.
 - **Watchlist / history / progress / ratings / comments** persist in `localStorage` — no account required.
 - **Theme studio** at `/settings`: dark/light/system, 5 accent palettes, background intensity (incl. AMOLED), card styles, density, font size, animation/blur controls — persisted, applied before first paint (no theme flash).
 - **Interface languages**: English, Español, Français, Deutsch, 日本語 (nav/footer/settings strings; catalog data stays in its source language).
@@ -134,7 +139,8 @@ src/
   lib/
     providers/
       index.ts          facade — the only module pages call (honors admin flags)
-      jikan.ts          remote metadata provider (throttled, cached, retries, circuit breaker)
+      jikan.ts          primary metadata provider (throttled, cached, retries, circuit breaker)
+      anilist.ts        secondary metadata provider (open GraphQL API, auto-fallback)
       local.ts          bundled fallback catalog + Nekomo Originals
       streaming.ts      authorized-stream resolution + official links
     admin/store.ts      integrations, feature flags, audit log (in-memory)

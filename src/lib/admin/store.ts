@@ -89,6 +89,7 @@ function seed(): void {
     ...partial,
   });
   integrations.set('jikan', mk({ id: 'jikan', kind: 'api', name: 'Jikan (MyAnimeList)', type: 'metadata', baseUrl: 'https://api.jikan.moe/v4', docsUrl: 'https://docs.api.jikan.moe/', priority: 1, rateLimitPerMin: 60, notes: 'Primary metadata provider' }));
+  integrations.set('anilist', mk({ id: 'anilist', kind: 'api', name: 'AniList', type: 'metadata', baseUrl: 'https://graphql.anilist.co', apiVersion: 'graphql', docsUrl: 'https://docs.anilist.co/', priority: 2, rateLimitPerMin: 90, notes: 'Free open GraphQL API — automatic fallback when Jikan fails' }));
   integrations.set('local-catalog', mk({ id: 'local-catalog', kind: 'source', name: 'Nekomo Local Catalog', type: 'catalog', baseUrl: 'internal://local', priority: 9, notes: 'Bundled fallback catalog — used when remote providers fail' }));
   integrations.set('nekobo-streams', mk({ id: 'nekomo-streams', kind: 'source', name: 'Nekomo Originals Streams', type: 'streaming', baseUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket', priority: 1, contentTypes: ['video'], notes: 'Creative Commons licensed sample streams (Blender Foundation)' }));
 }
