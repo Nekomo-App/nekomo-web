@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --rose: #d92b83;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-bg text-ink font-sans antialiased;
+  overflow-x: clip;
+  background-image:
+    radial-gradient(1200px 500px at 80% -10%, rgba(122, 23, 79, 0.22), transparent 60%),
+    radial-gradient(900px 400px at -10% 20%, rgba(142, 42, 104, 0.14), transparent 60%);
+  background-attachment: fixed;
+}
+
+::selection {
+  background: rgba(217, 43, 131, 0.45);
+  color: #fff;
+}
+
+/* Focus visibility for keyboard users */
+:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Slim, themed scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #42243a transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #42243a;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.glass {
+  background: rgba(38, 19, 35, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(66, 36, 58, 0.8);
+}
+
+/* Skeleton shimmer */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #261323;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(244, 167, 205, 0.08), transparent);
+  animation: shimmer 1.6s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Poster fade-in once the image loads */
+.poster-img {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.poster-img.loaded {
+  opacity: 1;
+}
+
+/* Line clamp helpers */
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Video player control fade */
+.vp-controls {
+  transition: opacity 0.3s ease;
+}
+
+/* Safe-area helpers for notched phones */
+.safe-b {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-t {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-x {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Touch devices: no hover, so always reveal card actions */
+@media (hover: none), (pointer: coarse) {
+  .touch-visible {
+    opacity: 1 !important;
+  }
+}
+
+/* Reduced motion: honor the OS setting + user toggle */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+html[data-motion='reduced'] *,
+html[data-motion='reduced'] *::before,
+html[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+html[data-motion='reduced'] {
+  scroll-behavior: auto;
+}
