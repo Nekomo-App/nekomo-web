@@ -14,7 +14,9 @@ interface CatalogSource {
   id: string;
   name: string;
   /** Search URL; `{q}` is replaced with the URL-encoded anime title. */
-  searchUrl: string;
+  searchUrl?: string;
+  /** Fallback homepage URL for sources without a title-search (e.g. self-hosted). */
+  url?: string;
   type: StreamingLink['type'];
   free?: boolean;
   region?: string;
@@ -27,13 +29,15 @@ const sources = (catalog.sources as CatalogSource[]).filter((s) => s.enabled !==
 /** Legal viewing links built from the JSON source catalog for a title. */
 export function catalogLinksFor(title: string): StreamingLink[] {
   const q = encodeURIComponent(title);
-  return sources.map((s) => ({
-    platform: s.name,
-    url: s.searchUrl.replace('{q}', q),
-    type: s.type,
-    free: s.free ?? false,
-    note: s.note,
-  }));
+  return sources
+    .filter((s) => s.searchUrl || s.url)
+    .map((s) => ({
+      platform: s.name,
+      url: s.searchUrl ? s.searchUrl.replace('{q}', q) : s.url!,
+      type: s.type,
+      free: s.free ?? false,
+      note: s.note,
+    }));
 }
 
 export function getAuthorizedStreamFor(

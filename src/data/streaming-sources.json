@@ -96,6 +96,56 @@
       "note": "Free tier · licensed · SEA region"
     },
     {
+      "id": "plex",
+      "name": "Plex",
+      "searchUrl": "https://watch.plex.tv/search?q={q}",
+      "type": "both",
+      "free": true,
+      "note": "Free · ad-supported"
+    },
+    {
+      "id": "viki",
+      "name": "Viki (Rakuten)",
+      "searchUrl": "https://www.viki.com/search?q={q}",
+      "type": "sub",
+      "free": true,
+      "note": "Free tier · ad-supported · licensed"
+    },
+    {
+      "id": "iqiyi",
+      "name": "iQIYI",
+      "searchUrl": "https://www.iq.com/search?query={q}",
+      "type": "sub",
+      "free": true,
+      "region": "Asia",
+      "note": "Free tier · ad-supported · licensed"
+    },
+    {
+      "id": "hoopla",
+      "name": "Hoopla",
+      "searchUrl": "https://www.hoopladigital.com/search?q={q}",
+      "type": "both",
+      "free": true,
+      "region": "US",
+      "note": "Free with a public library card"
+    },
+    {
+      "id": "jellyfin",
+      "name": "Jellyfin (self-hosted)",
+      "url": "https://jellyfin.org",
+      "type": "both",
+      "free": true,
+      "note": "Self-hosted · play your own media library"
+    },
+    {
+      "id": "stremio",
+      "name": "Stremio",
+      "url": "https://www.stremio.com",
+      "type": "both",
+      "free": true,
+      "note": "Free app · use official/legal addons only"
+    },
+    {
       "id": "crunchyroll",
       "name": "Crunchyroll",
       "searchUrl": "https://www.crunchyroll.com/search?q={q}",

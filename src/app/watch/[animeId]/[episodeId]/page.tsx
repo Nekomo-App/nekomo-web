@@ -5,6 +5,7 @@ import { getAuthorizedStreamingSources } from '@/lib/providers';
 import { officialLinksFor } from '@/lib/providers/streaming';
 import { cn } from '@/lib/utils';
 import type { StreamingLink } from '@/lib/types';
+import { CustomSource } from '@/components/CustomSource';
 import { Poster } from '@/components/Poster';
 import { StreamingLinks } from '@/components/StreamingLinks';
 import { TrackView } from '@/components/TrackView';
@@ -151,6 +152,8 @@ export default async function WatchPage({
             </h3>
             <StreamingLinks links={links} variant="compact" />
           </div>
+
+          <CustomSource />
         </aside>
       </div>
     </div>

@@ -4,11 +4,14 @@ import { catalogLinksFor, officialLinksFor } from '@/lib/providers/streaming';
 import type { AnimeDetails, StreamingLink } from '@/lib/types';
 
 describe('streaming source catalog', () => {
-  it('only contains https search URLs with a {q} placeholder', () => {
+  it('only contains https URLs; search URLs carry a {q} placeholder', () => {
     expect(catalog.sources.length).toBeGreaterThan(0);
     for (const s of catalog.sources) {
-      expect(s.searchUrl.startsWith('https://'), s.id).toBe(true);
-      expect(s.searchUrl.includes('{q}'), s.id).toBe(true);
+      const target = ('searchUrl' in s ? s.searchUrl : s.url) as string | undefined;
+      expect(target?.startsWith('https://'), s.id).toBe(true);
+      if ('searchUrl' in s && s.searchUrl) {
+        expect(s.searchUrl.includes('{q}'), s.id).toBe(true);
+      }
       expect(['sub', 'dub', 'both']).toContain(s.type);
     }
   });
@@ -16,21 +19,23 @@ describe('streaming source catalog', () => {
   it('never lists unauthorized scraping sites', () => {
     const banned = ['9anime', 'aniwave', 'gogoanime', 'kissanime', 'hianime', 'zoro.to', 'animepahe'];
     for (const s of catalog.sources) {
-      const hay = `${s.id} ${s.name} ${s.searchUrl}`.toLowerCase();
+      const hay = `${s.id} ${s.name} ${('searchUrl' in s ? s.searchUrl : s.url) ?? ''}`.toLowerCase();
       for (const b of banned) {
         expect(hay.includes(b), `${s.id} must be a licensed source`).toBe(false);
       }
     }
   });
 
-  it('builds a link per source with the title substituted', () => {
+  it('builds a link per source; search URLs get the title substituted', () => {
     const title = "Frieren: Beyond Journey's End";
     const links = catalogLinksFor(title);
     expect(links.length).toBe(catalog.sources.length);
     for (const l of links) {
       expect(l.url).not.toContain('{q}');
-      expect(l.url).toContain(encodeURIComponent(title));
     }
+    // Sources with a searchUrl must embed the encoded title.
+    const searchable = catalog.sources.filter((s) => 'searchUrl' in s && s.searchUrl).length;
+    expect(links.filter((l) => l.url.includes(encodeURIComponent(title))).length).toBe(searchable);
   });
 
   it('marks free sources', () => {

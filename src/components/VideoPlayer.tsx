@@ -39,10 +39,21 @@ export function VideoPlayer({
   const [subTrack, setSubTrack] = useState<string>('en');
   const [quality, setQuality] = useState(0);
   const [buffering, setBuffering] = useState(false);
+  const [bufferedEnd, setBufferedEnd] = useState(0);
   const [showSkip, setShowSkip] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [holdActive, setHoldActive] = useState(false);
+  const [flash, setFlash] = useState<{
+    kind: 'seek-back' | 'seek-fwd' | 'play' | 'pause';
+    id: number;
+  } | null>(null);
   // Survives the <video> remount on source switch — applied on loadeddata.
   const pendingRestore = useRef<{ time: number; playing: boolean } | null>(null);
+  const holdTimer = useRef<ReturnType<typeof setTimeout>>();
+  const tapTimer = useRef<ReturnType<typeof setTimeout>>();
+  const lastTapAt = useRef(0);
+  const holding = useRef(false);
+  const preHoldRate = useRef(1);
 
   const saveProgress = useStore((s) => s.saveProgress);
   const clearProgress = useStore((s) => s.clearProgress);
@@ -145,9 +156,115 @@ export function VideoPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [poke]);
 
-  const toggleFullscreen = () => {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else wrapRef.current?.requestFullscreen();
+  const toggleFullscreen = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    } else {
+      await wrapRef.current?.requestFullscreen();
+      try {
+        await (
+          screen.orientation as ScreenOrientation & {
+            lock?: (o: string) => Promise<void>;
+          }
+        )?.lock?.('landscape');
+      } catch {
+        /* orientation lock unsupported — fine */
+      }
+    }
+  };
+
+  // Release the landscape lock when fullscreen exits by any means.
+  useEffect(() => {
+    const onFs = () => {
+      if (!document.fullscreenElement) {
+        try {
+          screen.orientation?.unlock();
+        } catch {
+          /* noop */
+        }
+      }
+    };
+    document.addEventListener('fullscreenchange', onFs);
+    return () => document.removeEventListener('fullscreenchange', onFs);
+  }, []);
+
+  // Flash indicator auto-dismiss
+  useEffect(() => {
+    if (!flash) return;
+    const t = setTimeout(() => setFlash(null), 500);
+    return () => clearTimeout(t);
+  }, [flash]);
+
+  const seekBy = useCallback((seconds: number) => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = Math.min(Math.max(0, v.currentTime + seconds), v.duration || v.currentTime);
+  }, []);
+
+  const togglePlay = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play();
+      setFlash({ kind: 'play', id: Date.now() });
+    } else {
+      v.pause();
+      setFlash({ kind: 'pause', id: Date.now() });
+    }
+  }, []);
+
+  // Gesture layer: tap = play/pause, double-tap left/right = ±10s,
+  // press-and-hold = 2× speed until released.
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    clearTimeout(holdTimer.current);
+    holdTimer.current = setTimeout(() => {
+      const v = videoRef.current;
+      if (!v) return;
+      holding.current = true;
+      preHoldRate.current = v.playbackRate;
+      v.playbackRate = 2;
+      setRate(2);
+      setHoldActive(true);
+    }, 450);
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    clearTimeout(holdTimer.current);
+    if (holding.current) {
+      holding.current = false;
+      setHoldActive(false);
+      const v = videoRef.current;
+      if (v) {
+        v.playbackRate = preHoldRate.current;
+        setRate(preHoldRate.current);
+      }
+      return;
+    }
+    const rect = wrapRef.current?.getBoundingClientRect();
+    const now = Date.now();
+    if (now - lastTapAt.current < 300) {
+      clearTimeout(tapTimer.current);
+      lastTapAt.current = 0;
+      const dir = rect && e.clientX - rect.left < rect.width / 2 ? -1 : 1;
+      seekBy(dir * 10);
+      setFlash({ kind: dir < 0 ? 'seek-back' : 'seek-fwd', id: now });
+    } else {
+      lastTapAt.current = now;
+      tapTimer.current = setTimeout(togglePlay, 300);
+    }
+  };
+
+  const onPointerCancel = () => {
+    clearTimeout(holdTimer.current);
+    if (!holding.current) return;
+    holding.current = false;
+    setHoldActive(false);
+    const v = videoRef.current;
+    if (v) {
+      v.playbackRate = preHoldRate.current;
+      setRate(preHoldRate.current);
+    }
   };
 
   const togglePiP = async () => {
@@ -208,16 +325,16 @@ export function VideoPlayer({
         ref={videoRef}
         key={sources[quality]?.url ?? stream.url}
         src={sources[quality]?.url ?? stream.url}
-        className="h-full w-full"
+        className="h-full w-full touch-manipulation"
         playsInline
         crossOrigin="anonymous"
         controlsList="nodownload"
         disablePictureInPicture={false}
         onContextMenu={(e) => e.preventDefault()}
-        onClick={() => {
-          const v = videoRef.current;
-          v && (v.paused ? v.play() : v.pause());
-        }}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
+        onPointerLeave={onPointerCancel}
         onPlay={() => setPlaying(true)}
         onPause={() => {
           setPlaying(false);
@@ -225,6 +342,10 @@ export function VideoPlayer({
         }}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
         onDurationChange={(e) => setDuration(e.currentTarget.duration)}
+        onProgress={(e) => {
+          const b = e.currentTarget.buffered;
+          if (b.length) setBufferedEnd(b.end(b.length - 1));
+        }}
         onVolumeChange={(e) => {
           setVolume(e.currentTarget.volume);
           setMuted(e.currentTarget.muted);
@@ -302,6 +423,53 @@ export function VideoPlayer({
         </div>
       )}
 
+      {/* Gesture flash indicators */}
+      <AnimatePresence>
+        {flash && (
+          <motion.div
+            key={flash.id}
+            initial={{ opacity: 0.9, scale: 0.85 }}
+            animate={{ opacity: 0, scale: 1.15 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className={cn(
+              'pointer-events-none absolute top-1/2 flex -translate-y-1/2 flex-col items-center gap-1 text-white drop-shadow-lg',
+              flash.kind === 'seek-back'
+                ? 'left-[14%]'
+                : flash.kind === 'seek-fwd'
+                  ? 'right-[14%]'
+                  : 'left-1/2 -translate-x-1/2',
+            )}
+          >
+            {flash.kind === 'seek-back' && (
+              <>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6zm.5-6 8.5 6V6z" transform="scale(-1,1) translate(-24,0)" /></svg>
+                <span className="text-xs font-semibold">−10s</span>
+              </>
+            )}
+            {flash.kind === 'seek-fwd' && (
+              <>
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6zm9-12v12l8.5-6z" /></svg>
+                <span className="text-xs font-semibold">+10s</span>
+              </>
+            )}
+            {flash.kind === 'play' && (
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+            )}
+            {flash.kind === 'pause' && (
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Hold-to-speedup badge */}
+      {holdActive && (
+        <div className="pointer-events-none absolute right-4 top-4 rounded-md bg-black/70 px-2.5 py-1 text-[11px] font-semibold text-rose-light backdrop-blur">
+          2× speed
+        </div>
+      )}
+
       {/* Skip intro — only when verified data exists */}
       <AnimatePresence>
         {showSkip && episode.intro && (
@@ -326,27 +494,42 @@ export function VideoPlayer({
           controls ? 'opacity-100' : 'opacity-0',
         )}
       >
-        {/* Seek bar */}
-        <input
-          type="range"
-          min={0}
-          max={duration || 0}
-          step={0.1}
-          value={time}
-          onChange={(e) => {
-            const v = videoRef.current;
-            if (v) v.currentTime = Number(e.target.value);
-          }}
-          aria-label="Seek"
-          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/20 accent-rose"
-        />
+        {/* Seek bar with buffered + played track */}
+        <div className="relative h-1.5 w-full">
+          <div className="absolute inset-0 rounded-full bg-white/20" />
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-white/30"
+            style={{ width: `${duration ? (bufferedEnd / duration) * 100 : 0}%` }}
+          />
+          <div
+            className="absolute inset-y-0 left-0 rounded-full bg-rose"
+            style={{ width: `${duration ? (time / duration) * 100 : 0}%` }}
+          />
+          <input
+            type="range"
+            min={0}
+            max={duration || 0}
+            step={0.1}
+            value={time}
+            onChange={(e) => {
+              const v = videoRef.current;
+              if (v) v.currentTime = Number(e.target.value);
+            }}
+            aria-label="Seek"
+            className="absolute inset-0 h-full w-full cursor-pointer appearance-none bg-transparent accent-rose"
+          />
+        </div>
 
         <div className="mt-2 flex items-center gap-2 sm:gap-3">
           <button
-            onClick={() => {
-              const v = videoRef.current;
-              v && (v.paused ? v.play() : v.pause());
-            }}
+            onClick={() => seekBy(-10)}
+            aria-label="Back 10 seconds"
+            className="hidden min-h-[44px] min-w-[44px] items-center justify-center text-white transition-colors hover:text-rose-light sm:flex"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.3 0 6 2.7 6 6s-2.7 6-6 6-6-2.7-6-6H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z" /></svg>
+          </button>
+          <button
+            onClick={togglePlay}
             aria-label={playing ? 'Pause' : 'Play'}
             className="flex min-h-[44px] min-w-[44px] items-center justify-center text-white transition-colors hover:text-rose-light"
           >
@@ -356,6 +539,22 @@ export function VideoPlayer({
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
             )}
           </button>
+          <button
+            onClick={() => seekBy(10)}
+            aria-label="Forward 10 seconds"
+            className="hidden min-h-[44px] min-w-[44px] items-center justify-center text-white transition-colors hover:text-rose-light sm:flex"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1l5 5-5 5V7c-3.3 0-6 2.7-6 6s2.7 6 6 6 6-2.7 6-6h2c0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8z" /></svg>
+          </button>
+          {nextEpisodeId && (
+            <button
+              onClick={() => router.push(`/watch/${anime.id}/${nextEpisodeId}`)}
+              aria-label="Next episode"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center text-white transition-colors hover:text-rose-light"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" /></svg>
+            </button>
+          )}
 
           {/* Volume */}
           <div className="flex items-center gap-2">
