@@ -3,7 +3,7 @@
 export type AnimeFormat = 'TV' | 'MOVIE' | 'OVA' | 'ONA' | 'SPECIAL' | 'MUSIC';
 export type AnimeStatus = 'AIRING' | 'COMPLETED' | 'UPCOMING';
 export type AgeRating = 'G' | 'PG' | 'PG-13' | 'R' | 'R+' | 'Rx';
-export type ProviderId = 'jikan' | 'local';
+export type ProviderId = 'jikan' | 'anilist' | 'kitsu' | 'local';
 export type SeasonName = 'winter' | 'spring' | 'summer' | 'fall';
 
 export interface StreamingLink {
@@ -50,6 +50,8 @@ export interface Episode {
   thumbnail?: string;
   /** Verified intro window; only set when data is confirmed. */
   intro?: { start: number; end: number };
+  /** Verified outro/credits window. */
+  outro?: { start: number; end: number };
   stream?: AuthorizedStream | null;
 }
 

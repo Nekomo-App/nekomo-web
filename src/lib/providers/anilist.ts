@@ -114,7 +114,7 @@ function mapSummary(m: J): AnimeSummary {
   const streams: J[] = (m.externalLinks ?? []).filter((l: J) => l.type === 'STREAMING');
   return {
     id: String(m.idMal ?? m.id),
-    provider: 'jikan',
+    provider: 'anilist',
     title: m.title?.english || m.title?.romaji || 'Untitled',
     altTitle: m.title?.english && m.title.romaji !== m.title.english ? m.title.romaji : undefined,
     japaneseTitle: m.title?.native ?? undefined,

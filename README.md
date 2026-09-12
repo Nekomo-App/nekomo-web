@@ -51,8 +51,9 @@ for persistent admin state.
 
 ## What works out of the box
 
-- **No API key needed.** Metadata comes from the free, documented [Jikan API](https://docs.api.jikan.moe) (MyAnimeList data), with the free, open [AniList GraphQL API](https://docs.anilist.co/) as automatic fallback. Every provider call runs server-side with throttling, request timeouts, TTL caching, and a circuit breaker.
+- **No API key needed.** Metadata comes from three free, documented APIs — [Jikan](https://docs.api.jikan.moe) (MyAnimeList), [AniList GraphQL](https://docs.anilist.co/), and [Kitsu](https://kitsu.docs.apiary.io/) — chained `Jikan → AniList → Kitsu → local`, each with server-side throttling, timeouts, TTL caching, and a circuit breaker. [AniSkip](https://api.aniskip.com) supplies open episode intro/outro timings for the player's skip-intro overlay.
 - **Works offline too.** If all remote providers are unreachable, the app falls back to a bundled catalog of original Nekomo titles so the UI stays fully usable.
+- **Sign-in gate + human check.** Browsing requires a local demo profile; `/login` shows a simple math puzzle first (light bot deterrence — not a security control), and a one-time DMCA/legal disclaimer appears after first sign-in. `/login`, `/dmca`, `/contact`, and the admin areas stay reachable without a profile.
 - **Watchlist / history / progress / ratings / comments** persist in `localStorage` — no account required.
 - **Theme studio** at `/settings`: dark/light/system, 5 accent palettes, background intensity (incl. AMOLED), card styles, density, font size, animation/blur controls — persisted, applied before first paint (no theme flash).
 - **Interface languages**: English, Español, Français, Deutsch, 日本語 (nav/footer/settings strings; catalog data stays in its source language).
@@ -72,7 +73,7 @@ for persistent admin state.
 | `/watch/[animeId]/[episodeId]` | Licensed player or official-links fallback |
 | `/watchlist`, `/history` | Local library (grid/list view toggle) |
 | `/settings` | Theme studio + language + motion/blur controls |
-| `/login` | Demo auth — local profile stored on-device (sign-in / register / reset) |
+| `/login` | Human check → demo auth (local profile, on-device) → legal disclaimer |
 | `/admin` | **Gated.** Dashboard: overview stats, reports, sources, APIs, audit log |
 | `/developer` | **Gated.** Runtime info, feature flags, cache controls, env status |
 | `/dmca` | Copyright policy + takedown notice form |
@@ -141,6 +142,8 @@ src/
       index.ts          facade — the only module pages call (honors admin flags)
       jikan.ts          primary metadata provider (throttled, cached, retries, circuit breaker)
       anilist.ts        secondary metadata provider (open GraphQL API, auto-fallback)
+      kitsu.ts          tertiary metadata provider (Kitsu JSON:API, auto-fallback)
+      aniskip.ts        intro/outro timings → player skip overlay
       local.ts          bundled fallback catalog + Nekomo Originals
       streaming.ts      authorized-stream resolution + official links
     admin/store.ts      integrations, feature flags, audit log (in-memory)
