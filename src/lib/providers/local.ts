@@ -1,7 +1,7 @@
 // Bundled fallback catalog — used when the remote metadata provider is
-// unreachable, and home of "Nekomō Originals": demo titles whose episodes
+// unreachable, and home of "Nekomo Originals": demo titles whose episodes
 // stream Creative Commons–licensed films (© Blender Foundation, CC-BY),
-// which Nekomō is explicitly permitted to embed.
+// which Nekomo is explicitly permitted to embed.
 
 import type {
   AnimeDetails,
@@ -31,7 +31,7 @@ const CC_VIDEOS = [
 function ccStream(index: number): AuthorizedStream {
   const v = CC_VIDEOS[index % CC_VIDEOS.length];
   return {
-    provider: 'Nekomō Originals',
+    provider: 'Nekomo Originals',
     kind: 'mp4',
     url: v.url,
     subtitles: [{ lang: 'en', label: 'English', url: '/subtitles/originals-en.vtt' }],
@@ -98,8 +98,8 @@ const SEEDS: LocalSeed[] = [
     airedEpisodes: 8,
     genres: ['Adventure', 'Sci-Fi', 'Slice of Life'],
     themes: ['Space', 'Pets'],
-    studios: ['Nekomō Pictures'],
-    producers: ['Nekomō Originals'],
+    studios: ['Nekomo Pictures'],
+    producers: ['Nekomo Originals'],
     durationMin: 24,
     ageRating: 'PG-13',
     artHue: 315,
@@ -454,7 +454,7 @@ function buildDetails(seed: LocalSeed): AnimeDetails {
     seed.streamingLinks ??
     (seed.original
       ? [
-          { platform: 'Nekomō Originals', url: `/anime/${seed.id}`, type: 'both', note: 'Stream free on Nekomō' },
+          { platform: 'Nekomo Originals', url: `/anime/${seed.id}`, type: 'both', note: 'Stream free on Nekomo' },
         ]
       : [
           {

@@ -13,6 +13,7 @@ import { Tabs } from '@/components/Tabs';
 import { TrackView } from '@/components/TrackView';
 import { RatingWidget } from '@/components/RatingWidget';
 import { Synopsis } from '@/components/Synopsis';
+import { Comments } from '@/components/Comments';
 
 export const dynamic = 'force-dynamic';
 
@@ -190,10 +191,15 @@ export default async function AnimePage({ params }: { params: { id: string } }) 
                           <RatingWidget animeId={anime.id} large />
                         </div>
                         <p className="text-xs text-ink-muted">
-                          Written reviews are disabled in this build — ratings only.
+                          Community ratings are stored on this device.
                         </p>
                       </div>
                     ),
+                  },
+                  {
+                    id: 'comments',
+                    label: 'Comments',
+                    content: <Comments animeId={anime.id} />,
                   },
                   {
                     id: 'streaming',
@@ -201,7 +207,7 @@ export default async function AnimePage({ params }: { params: { id: string } }) 
                     content: (
                       <div className="max-w-xl">
                         <p className="mb-4 text-sm text-ink-muted">
-                          Nekomō only links to authorized platforms. We never mirror or proxy
+                          Nekomo only links to authorized platforms. We never mirror or proxy
                           unauthorized streams.
                         </p>
                         <StreamingLinks links={links} />

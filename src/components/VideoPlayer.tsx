@@ -214,6 +214,9 @@ export function VideoPlayer({
         className="h-full w-full"
         playsInline
         crossOrigin="anonymous"
+        controlsList="nodownload"
+        disablePictureInPicture={false}
+        onContextMenu={(e) => e.preventDefault()}
         onClick={() => {
           const v = videoRef.current;
           v && (v.paused ? v.play() : v.pause());

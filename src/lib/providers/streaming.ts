@@ -1,5 +1,5 @@
-// Streaming policy: Nekomō only ever returns streams it owns, licenses, or
-// has explicit permission to embed. "Nekomō Originals" episodes point at
+// Streaming policy: Nekomo only ever returns streams it owns, licenses, or
+// has explicit permission to embed. "Nekomo Originals" episodes point at
 // Creative Commons–licensed films (© Blender Foundation, CC-BY) that are
 // explicitly cleared for embedding. Everything else resolves to official
 // platform links — never scraped or proxied third-party players.

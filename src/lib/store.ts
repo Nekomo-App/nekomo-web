@@ -7,6 +7,46 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useEffect, useState } from 'react';
 import type { AnimeSummary } from '@/lib/types';
+import type { Lang } from '@/lib/i18n';
+
+export interface ThemeSettings {
+  mode: 'dark' | 'light' | 'system';
+  accent: 'pink' | 'violet' | 'cyan' | 'magenta' | 'blue';
+  bg: 'default' | 'deep' | 'amoled';
+  card: 'default' | 'flat' | 'glass';
+  density: 'comfortable' | 'compact';
+  fontSize: 'small' | 'medium' | 'large';
+  animations: boolean;
+  reducedMotion: boolean;
+  blur: boolean;
+}
+
+export interface Comment {
+  id: string;
+  author: string;
+  text: string;
+  at: string;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  body?: string;
+  at: string;
+  read: boolean;
+}
+
+export const DEFAULT_THEME: ThemeSettings = {
+  mode: 'dark',
+  accent: 'pink',
+  bg: 'default',
+  card: 'default',
+  density: 'comfortable',
+  fontSize: 'medium',
+  animations: true,
+  reducedMotion: false,
+  blur: true,
+};
 
 export interface WatchProgress {
   animeId: string;
@@ -39,7 +79,11 @@ interface NekomoState {
   recentSearches: string[];
   autoplayNext: boolean;
   reducedMotion: boolean;
+  theme: ThemeSettings;
   profile: { name: string; email: string } | null;
+  comments: Record<string, Comment[]>;
+  notifications: AppNotification[];
+  language: Lang;
   toggleWatchlist: (a: AnimeSummary) => boolean;
   inWatchlist: (id: string) => boolean;
   markViewed: (a: { id: string; title: string; poster?: string; artHue?: number; format?: string }) => void;
@@ -50,7 +94,15 @@ interface NekomoState {
   addRecentSearch: (q: string) => void;
   setAutoplayNext: (v: boolean) => void;
   setReducedMotion: (v: boolean) => void;
+  setTheme: (patch: Partial<ThemeSettings>) => void;
+  resetTheme: () => void;
   setProfile: (p: { name: string; email: string } | null) => void;
+  addComment: (animeId: string, author: string, text: string) => void;
+  deleteComment: (animeId: string, id: string) => void;
+  notify: (title: string, body?: string) => void;
+  markNotificationsRead: () => void;
+  clearNotifications: () => void;
+  setLanguage: (l: Lang) => void;
   clearHistory: () => void;
   removeFromWatchlist: (id: string) => void;
 }
@@ -68,7 +120,11 @@ export const useStore = create<NekomoState>()(
       recentSearches: [],
       autoplayNext: true,
       reducedMotion: false,
+      theme: DEFAULT_THEME,
       profile: null,
+      comments: {},
+      notifications: [],
+      language: 'en',
 
       toggleWatchlist: (a) => {
         const list = get().watchlist;
@@ -123,6 +179,52 @@ export const useStore = create<NekomoState>()(
 
       setAutoplayNext: (v) => set({ autoplayNext: v }),
       setReducedMotion: (v) => set({ reducedMotion: v }),
+      setTheme: (patch) => {
+        const next = { ...get().theme, ...patch };
+        set({ theme: next });
+        // keep legacy flag in sync for older components
+        set({ reducedMotion: next.reducedMotion || !next.animations });
+      },
+      resetTheme: () => set({ theme: DEFAULT_THEME, reducedMotion: false }),
+      addComment: (animeId, author, text) =>
+        set((s) => ({
+          comments: {
+            ...s.comments,
+            [animeId]: [
+              {
+                id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+                author: author.trim() || 'Anonymous',
+                text: text.trim().slice(0, 1000),
+                at: new Date().toISOString(),
+              },
+              ...(s.comments[animeId] ?? []),
+            ],
+          },
+        })),
+      deleteComment: (animeId, id) =>
+        set((s) => ({
+          comments: {
+            ...s.comments,
+            [animeId]: (s.comments[animeId] ?? []).filter((c) => c.id !== id),
+          },
+        })),
+      notify: (title, body) =>
+        set((s) => ({
+          notifications: [
+            {
+              id: `n-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              title: title.slice(0, 120),
+              body: body?.slice(0, 300),
+              at: new Date().toISOString(),
+              read: false,
+            },
+            ...s.notifications,
+          ].slice(0, 50),
+        })),
+      markNotificationsRead: () =>
+        set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) })),
+      clearNotifications: () => set({ notifications: [] }),
+      setLanguage: (l) => set({ language: l }),
       setProfile: (p) => set({ profile: p }),
       clearHistory: () => set({ history: [] }),
     }),

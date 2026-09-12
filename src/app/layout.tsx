@@ -4,13 +4,28 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Toaster } from '@/components/Toaster';
 import { ScrollToTop } from '@/components/ScrollToTop';
-import { MotionProvider } from '@/components/MotionProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
-  title: { default: 'Nekomō — Discover your next story', template: '%s · Nekomō' },
+  title: { default: 'Nekomo — Discover your next story', template: '%s · Nekomo' },
   description:
-    'Nekomō is an anime discovery platform with legally authorized streaming. Browse, track, and watch from official sources.',
+    'Nekomo is an anime discovery platform with legally authorized streaming. Browse, track, and watch from official sources.',
   metadataBase: new URL(process.env.SITE_URL || 'http://localhost:3000'),
+  applicationName: 'Nekomo',
+  openGraph: {
+    siteName: 'Nekomo',
+    title: 'Nekomo — Discover your next story',
+    description:
+      'Anime discovery and legally authorized streaming. Browse, track, and watch from official sources.',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Nekomo — Discover your next story',
+    description: 'Anime discovery and legally authorized streaming.',
+  },
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
@@ -30,17 +45,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap"
           rel="stylesheet"
         />
+        {/* Apply persisted theme before first paint to avoid flashing the wrong theme */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var s=JSON.parse(localStorage.getItem('nekomo-store')||'{}').state||{};var t=s.theme||{};var m=t.mode||'dark';var r=m==='system'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):m;var e=document.documentElement;e.dataset.theme=r;e.dataset.accent=t.accent||'pink';e.dataset.bg=t.bg||'default';e.dataset.card=t.card||'default';e.dataset.density=t.density||'comfortable';e.dataset.blur=t.blur===false?'off':'on';e.dataset.motion=(s.reducedMotion||t.animations===false)?'reduced':'full';e.style.setProperty('--font-scale',{small:'14.5px',large:'17.5px'}[t.fontSize]||'16px');}catch(e){}`,
+          }}
+        />
       </head>
       <body className="min-h-screen flex flex-col">
-        <MotionProvider>
+        <ThemeProvider>
           <Navbar />
           <main className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
             {children}
           </main>
-          <Footer />
+          <Footer dmcaEmail={process.env.DMCA_CONTACT_EMAIL} />
           <Toaster />
           <ScrollToTop />
-        </MotionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

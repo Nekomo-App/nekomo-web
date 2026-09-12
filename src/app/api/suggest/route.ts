@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAnimeSearchResults } from '@/lib/providers';
 import { rateLimit } from '@/lib/ratelimit';
+import { getFlags } from '@/lib/admin/store';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  if (getFlags().maintenance) {
+    return NextResponse.json({ error: 'Maintenance mode' }, { status: 503 });
+  }
   const ip = req.headers.get('x-forwarded-for') ?? 'local';
   const rl = rateLimit(`suggest:${ip}`, 30, 60_000);
   if (!rl.ok) {

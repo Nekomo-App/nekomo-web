@@ -195,9 +195,9 @@ function NoStreamPanel({
         </div>
       )}
       <div className="p-6">
-        <h2 className="font-display text-lg font-bold">No authorized stream on Nekomō</h2>
+        <h2 className="font-display text-lg font-bold">No authorized stream on Nekomo</h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-ink-muted">
-          Nekomō only embeds video it owns, licenses, or has explicit permission to show.
+          Nekomo only embeds video it owns, licenses, or has explicit permission to show.
           This title is available through the official platforms below.
         </p>
         <ul className="mt-4 space-y-2">

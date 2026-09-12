@@ -15,8 +15,16 @@ import type {
 import * as jikan from './jikan';
 import * as local from './local';
 import { getAuthorizedStreamFor } from './streaming';
+import { getFlags, getIntegration } from '@/lib/admin/store';
 
 const isLocalId = (id: string) => id.startsWith('loc-');
+
+/** Local catalog fallback can be disabled by an admin (feature flag or integration). */
+function localEnabled(): boolean {
+  return getFlags().localFallback && getIntegration('local-catalog')?.enabled !== false;
+}
+
+const localOr = <T>(fn: () => T, empty: T): T => (localEnabled() ? fn() : empty);
 
 function logProviderError(context: string, err: unknown) {
   // Never log request URLs with keys or response bodies — message + name only.
@@ -27,7 +35,7 @@ function logProviderError(context: string, err: unknown) {
 export async function getAnimeSearchResults(params: SearchParams): Promise<SearchResult> {
   try {
     const remote = await jikan.search(params);
-    const locals = local.localSearch(params);
+    const locals = localOr(() => local.localSearch(params), { items: [] as AnimeSummary[], total: 0, page: params.page ?? 1, hasMore: false });
     // Merge local originals first when the query is light, so owned content surfaces.
     if (locals.items.length && (params.q || params.hasOfficialStream || !params.sort || params.sort === 'popularity')) {
       const seen = new Set(remote.items.map((i) => i.id));
@@ -40,7 +48,12 @@ export async function getAnimeSearchResults(params: SearchParams): Promise<Searc
     return remote;
   } catch (err) {
     logProviderError('search', err);
-    return local.localSearch(params);
+    return localOr(() => local.localSearch(params), {
+      items: [],
+      total: 0,
+      page: params.page ?? 1,
+      hasMore: false,
+    });
   }
 }
 
@@ -72,21 +85,21 @@ export async function getAnimeRecommendations(id: string): Promise<AnimeSummary[
 export async function getSeasonalAnime(season?: SeasonName, year?: number): Promise<AnimeSummary[]> {
   try {
     const items = await jikan.seasonal(season, year);
-    return items.length ? items : local.localSeasonal(season, year);
+    return items.length ? items : localOr(() => local.localSeasonal(season, year), []);
   } catch (err) {
     logProviderError('seasonal', err);
-    return local.localSeasonal(season, year);
+    return localOr(() => local.localSeasonal(season, year), []);
   }
 }
 
 export async function getTrendingAnime(): Promise<AnimeSummary[]> {
   try {
     const items = await jikan.top();
-    const locals = local.localTrending().slice(0, 4);
+    const locals = localOr<AnimeSummary[]>(() => local.localTrending().slice(0, 4), []);
     return [...locals, ...items];
   } catch (err) {
     logProviderError('trending', err);
-    return local.localTrending();
+    return localOr<AnimeSummary[]>(local.localTrending, []);
   }
 }
 
@@ -95,7 +108,7 @@ export async function getPopularAnime(): Promise<AnimeSummary[]> {
     return await jikan.top('bypopularity');
   } catch (err) {
     logProviderError('popular', err);
-    return local.localTrending();
+    return localOr<AnimeSummary[]>(local.localTrending, []);
   }
 }
 
@@ -104,7 +117,7 @@ export async function getTopRatedAnime(): Promise<AnimeSummary[]> {
     return await jikan.top('favorite');
   } catch (err) {
     logProviderError('top-rated', err);
-    return local.localTrending();
+    return localOr<AnimeSummary[]>(local.localTrending, []);
   }
 }
 
@@ -113,27 +126,27 @@ export async function getUpcomingAnime(): Promise<AnimeSummary[]> {
     return await jikan.upcoming();
   } catch (err) {
     logProviderError('upcoming', err);
-    return local.localSeasonal().filter((a) => a.status === 'UPCOMING');
+    return localOr(() => local.localSeasonal().filter((a) => a.status === 'UPCOMING'), []);
   }
 }
 
 export async function getRecentlyUpdatedAnime(): Promise<AnimeSummary[]> {
   try {
     const items = await jikan.recentEpisodes();
-    return items.length ? items : local.localTrending();
+    return items.length ? items : localOr<AnimeSummary[]>(local.localTrending, []);
   } catch (err) {
     logProviderError('recent', err);
-    return local.localTrending();
+    return localOr<AnimeSummary[]>(local.localTrending, []);
   }
 }
 
 export async function getSchedule(day: string): Promise<AnimeSummary[]> {
   try {
     const items = await jikan.schedule(day);
-    return items.length ? items : local.localSchedule(day);
+    return items.length ? items : localOr(() => local.localSchedule(day), []);
   } catch (err) {
     logProviderError('schedule', err);
-    return local.localSchedule(day);
+    return localOr(() => local.localSchedule(day), []);
   }
 }
 
@@ -150,32 +163,30 @@ export async function getWeeklySchedule(): Promise<{
   }
   // Offline fallback: local catalog
   const days = {} as Record<jikan.DayKey, AnimeSummary[]>;
-  for (const d of jikan.WEEK_DAYS) days[d] = local.localSchedule(d);
+  for (const d of jikan.WEEK_DAYS) days[d] = localOr(() => local.localSchedule(d), []);
   return {
     days,
-    unknown: local
-      .localTrending()
-      .filter((a) => !a.broadcast),
+    unknown: localOr(() => local.localTrending().filter((a) => !a.broadcast), []),
   };
 }
 
 export async function getAnimeGenres(): Promise<GenreInfo[]> {
   try {
     const g = await jikan.genres();
-    return g.length ? g : local.localGenres();
+    return g.length ? g : localOr(local.localGenres, []);
   } catch (err) {
     logProviderError('genres', err);
-    return local.localGenres();
+    return localOr(local.localGenres, []);
   }
 }
 
 export async function getOfficialTrailers(): Promise<TrailerEntry[]> {
   try {
     const t = await jikan.trailers();
-    return t.length ? t : local.localTrailers();
+    return t.length ? t : localOr(local.localTrailers, []);
   } catch (err) {
     logProviderError('trailers', err);
-    return local.localTrailers();
+    return localOr(local.localTrailers, []);
   }
 }
 

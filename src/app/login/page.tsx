@@ -61,7 +61,7 @@ export default function LoginPage() {
     <div className="mx-auto flex max-w-md flex-col items-center px-4 py-12 sm:px-6">
       <Logo size={44} />
       <h1 className="mt-4 font-display text-2xl font-bold">
-        {hydrated && profile ? 'Your account' : 'Welcome to Nekomō'}
+        {hydrated && profile ? 'Your account' : 'Welcome to Nekomo'}
       </h1>
       <p className="mt-1 text-center text-sm text-ink-muted">
         {hydrated && profile

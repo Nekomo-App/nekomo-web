@@ -1,15 +1,21 @@
+'use client';
+
 import Link from 'next/link';
 import { Logo } from './Logo';
+import { useT } from '@/lib/i18n';
 
-export function Footer() {
-  const dmca = process.env.DMCA_CONTACT_EMAIL || 'legal@nekomo.example';
+export function Footer({ dmcaEmail = 'legal@nekomo.example' }: { dmcaEmail?: string }) {
+  const t = useT();
   return (
     <footer className="border-t border-line bg-bg-alt/60">
       <div className="mx-auto grid max-w-[1560px] gap-8 px-4 py-10 sm:px-6 md:grid-cols-3">
         <div>
           <Logo size={30} />
           <p className="mt-3 max-w-xs text-sm text-ink-muted">
-            Discover your next story. Anime discovery with legally authorized streaming only.
+            {t('footer.tagline')} {t('footer.legal')}
+          </p>
+          <p className="mt-3 max-w-xs rounded-xl border border-line bg-card/50 p-3 text-xs leading-relaxed text-ink-muted">
+            <span className="font-medium text-ink">Privacy tip:</span> {t('footer.privacy')}
           </p>
         </div>
         <div>
@@ -17,16 +23,16 @@ export function Footer() {
             Explore
           </h3>
           <ul className="space-y-2 text-sm">
-            {[
-              ['Browse', '/browse'],
-              ['Genres', '/genres'],
-              ['Seasonal', '/seasonal'],
-              ['Schedule', '/schedule'],
-              ['Watchlist', '/watchlist'],
-            ].map(([label, href]) => (
+            {([
+              ['nav.browse', '/browse'],
+              ['nav.genres', '/genres'],
+              ['nav.seasonal', '/seasonal'],
+              ['nav.schedule', '/schedule'],
+              ['nav.watchlist', '/watchlist'],
+            ] as const).map(([key, href]) => (
               <li key={href}>
                 <Link href={href} className="text-ink-muted transition-colors hover:text-rose-light">
-                  {label}
+                  {t(key)}
                 </Link>
               </li>
             ))}
@@ -41,25 +47,25 @@ export function Footer() {
             <li>Streams shown only when licensed or explicitly permitted.</li>
             <li>
               <Link href="/dmca" className="text-rose-light hover:underline">
-                DMCA &amp; copyright notices
+                {t('footer.dmca')} &amp; copyright notices
               </Link>
             </li>
             <li>
               <Link href="/contact" className="text-rose-light hover:underline">
-                Contact us
+                {t('footer.contact')}
               </Link>
             </li>
             <li>
               Rights holders:{' '}
-              <a href={`mailto:${dmca}`} className="text-rose-light hover:underline">
-                {dmca}
+              <a href={`mailto:${dmcaEmail}`} className="text-rose-light hover:underline">
+                {dmcaEmail}
               </a>
             </li>
           </ul>
         </div>
       </div>
       <div className="border-t border-line py-4 text-center text-xs text-ink-muted">
-        Nekomō — an original demo project. Not affiliated with any existing platform.
+        {t('footer.demo')}
       </div>
     </footer>
   );
