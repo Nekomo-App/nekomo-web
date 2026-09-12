@@ -8,7 +8,7 @@ export function Footer({ dmcaEmail = 'legal@nekomo.example' }: { dmcaEmail?: str
   const t = useT();
   return (
     <footer className="border-t border-line bg-bg-alt/60">
-      <div className="mx-auto grid max-w-[1560px] gap-8 px-4 py-10 sm:px-6 md:grid-cols-3">
+      <div className="mx-auto grid max-w-[1560px] gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 lg:grid-cols-4">
         <div>
           <Logo size={30} />
           <p className="mt-3 max-w-xs text-sm text-ink-muted">
@@ -34,6 +34,31 @@ export function Footer({ dmcaEmail = 'legal@nekomo.example' }: { dmcaEmail?: str
                 <Link href={href} className="text-ink-muted transition-colors hover:text-rose-light">
                   {t(key)}
                 </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3 className="mb-3 font-display text-sm font-semibold uppercase tracking-wider text-ink-muted">
+            Community
+          </h3>
+          <ul className="space-y-2 text-sm">
+            {([
+              ['Discord', 'https://discord.com/invite/E4Ezmgg7Ka'],
+              ['GitHub org', 'https://github.com/Nekomo-App'],
+              ['Nekomo app', 'https://github.com/Nekomo-App/Nekomo'],
+              ['Android sources', 'https://github.com/Nekomo-App/neko-source'],
+              ['This website', 'https://github.com/Nekomo-App/nekomo-web'],
+            ] as const).map(([label, href]) => (
+              <li key={href}>
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-ink-muted transition-colors hover:text-rose-light"
+                >
+                  {label} ↗
+                </a>
               </li>
             ))}
           </ul>

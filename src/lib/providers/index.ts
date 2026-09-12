@@ -19,6 +19,7 @@ import * as local from './local';
 import { getAuthorizedStreamFor } from './streaming';
 import { getSkipTimes } from './aniskip';
 import { getFlags, getIntegration } from '@/lib/admin/store';
+import { recordError } from '@/lib/errors';
 
 const isLocalId = (id: string) => id.startsWith('loc-');
 
@@ -33,6 +34,7 @@ function logProviderError(context: string, err: unknown) {
   // Never log request URLs with keys or response bodies — message + name only.
   const msg = err instanceof Error ? `${err.name}: ${err.message}` : 'unknown';
   console.error(`[provider:${context}] ${msg}`);
+  recordError({ source: 'provider', context, message: msg });
 }
 
 export async function getAnimeSearchResults(params: SearchParams): Promise<SearchResult> {

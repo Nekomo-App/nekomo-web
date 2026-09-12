@@ -4,6 +4,12 @@
 
 **Live demo:** https://nekomo.netlify.app/
 
+**Community:** [Discord](https://discord.com/invite/E4Ezmgg7Ka) ·
+[GitHub org](https://github.com/Nekomo-App) ·
+[Nekomo app](https://github.com/Nekomo-App/Nekomo) ·
+[Android sources](https://github.com/Nekomo-App/neko-source) ·
+[This website](https://github.com/Nekomo-App/nekomo-web)
+
 > **Note:** This is a web project. It is not affiliated with or linked to any
 > Nekomo app or other existing platform.
 
@@ -53,7 +59,8 @@ for persistent admin state.
 
 - **No API key needed.** Metadata comes from three free, documented APIs — [Jikan](https://docs.api.jikan.moe) (MyAnimeList), [AniList GraphQL](https://docs.anilist.co/), and [Kitsu](https://kitsu.docs.apiary.io/) — chained `Jikan → AniList → Kitsu → local`, each with server-side throttling, timeouts, TTL caching, and a circuit breaker. [AniSkip](https://api.aniskip.com) supplies open episode intro/outro timings for the player's skip-intro overlay.
 - **Works offline too.** If all remote providers are unreachable, the app falls back to a bundled catalog of original Nekomo titles so the UI stays fully usable.
-- **Sign-in gate + human check.** Browsing requires a local demo profile; `/login` shows a simple math puzzle first (light bot deterrence — not a security control), and a one-time DMCA/legal disclaimer appears after first sign-in. `/login`, `/dmca`, `/contact`, and the admin areas stay reachable without a profile.
+- **Sign-in gate + human check.** Browsing requires sign-in; `/login` shows a simple math puzzle first (light bot deterrence — not a security control), and a one-time DMCA/legal disclaimer appears after first sign-in. `/login`, `/dmca`, `/contact`, and the admin areas stay reachable without a profile.
+- **AniList sign-in.** Real OAuth — sign in with your AniList account and your watching list + episode progress sync both ways (progress you make on Nekomo is written back to AniList). Falls back to a local on-device profile if you prefer not to use AniList.
 - **Watchlist / history / progress / ratings / comments** persist in `localStorage` — no account required.
 - **Theme studio** at `/settings`: dark/light/system, 5 accent palettes, background intensity (incl. AMOLED), card styles, density, font size, animation/blur controls — persisted, applied before first paint (no theme flash).
 - **Interface languages**: English, Español, Français, Deutsch, 日本語 (nav/footer/settings strings; catalog data stays in its source language).
@@ -73,7 +80,7 @@ for persistent admin state.
 | `/watch/[animeId]/[episodeId]` | Licensed player or official-links fallback |
 | `/watchlist`, `/history` | Local library (grid/list view toggle) |
 | `/settings` | Theme studio + language + motion/blur controls |
-| `/login` | Human check → demo auth (local profile, on-device) → legal disclaimer |
+| `/login` | Human check → AniList OAuth or local profile → legal disclaimer |
 | `/admin` | **Gated.** Dashboard: overview stats, reports, sources, APIs, audit log |
 | `/developer` | **Gated.** Runtime info, feature flags, cache controls, env status |
 | `/dmca` | Copyright policy + takedown notice form |
@@ -85,6 +92,12 @@ for persistent admin state.
 | --- | --- | --- |
 | `GET /api/suggest?q=` | public, rate-limited | Search suggestions |
 | `POST /api/report` | public, rate-limited | Submit a report (broken source, copyright, contact…) |
+| `GET /api/auth/anilist` | public | Start AniList OAuth (state-cookie CSRF) |
+| `GET /api/auth/anilist/callback` | public | OAuth callback → session cookie |
+| `GET /api/auth/me` | session | Current user profile (never the token) |
+| `GET/POST /api/auth/logout` | session | Clear the session cookie |
+| `GET /api/anilist/list` | session | User's current/paused list (continue-watching sync) |
+| `POST /api/anilist/progress` | session, rate-limited | Write episode progress back to AniList |
 | `GET /api/report` | **admin** | List reports |
 | `PATCH /api/report?id=` | **admin** | Resolve a report |
 | `POST/DELETE/GET /api/admin/auth` | public (key) | Admin login/logout/status — rate-limited |
@@ -168,7 +181,9 @@ Copy `.env.example` → `.env.local`. All are optional for local dev **except**
 ```env
 DATABASE_URL=                    # reserved for a future server-side library
 ADMIN_KEY=                       # gates /admin + /developer
-AUTH_SECRET=                     # signs the admin session cookie
+AUTH_SECRET=                     # signs the admin + AniList session cookies
+ANILIST_CLIENT_ID=               # AniList OAuth — sign-in + list sync
+ANILIST_CLIENT_SECRET=           # register at anilist.co/settings/developer
 ANIME_METADATA_API_URL=https://api.jikan.moe/v4
 ANIME_METADATA_API_KEY=          # not needed for Jikan
 OFFICIAL_STREAMING_API_URL=

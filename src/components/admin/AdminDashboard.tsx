@@ -7,14 +7,16 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/components/Toaster';
 import { IntegrationsPanel } from '@/components/admin/IntegrationsPanel';
 import type { StoredReport } from '@/lib/reports';
+import { githubIssueUrl, type ErrorEntry } from '@/lib/errors';
 
-type Tab = 'overview' | 'reports' | 'sources' | 'apis' | 'audit';
+type Tab = 'overview' | 'reports' | 'sources' | 'apis' | 'errors' | 'audit';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'reports', label: 'Reports' },
   { id: 'sources', label: 'Sources' },
   { id: 'apis', label: 'APIs' },
+  { id: 'errors', label: 'Errors' },
   { id: 'audit', label: 'Audit log' },
 ];
 
@@ -107,6 +109,7 @@ export function AdminDashboard() {
         {tab === 'reports' && <ReportsPanel />}
         {tab === 'sources' && <IntegrationsPanel kind="source" />}
         {tab === 'apis' && <IntegrationsPanel kind="api" />}
+        {tab === 'errors' && <ErrorsPanel />}
         {tab === 'audit' && <AuditPanel />}
       </div>
     </div>
@@ -308,6 +311,135 @@ function ReportsPanel() {
                     Resolve
                   </button>
                 )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/* ---------------- Errors ---------------- */
+
+function ErrorsPanel() {
+  const [errors, setErrors] = useState<ErrorEntry[] | null>(null);
+  const [source, setSource] = useState<'all' | string>('all');
+
+  const load = useCallback(async () => {
+    const res = await fetch('/api/admin/errors', { cache: 'no-store' });
+    setErrors(res.ok ? (await res.json()).errors : []);
+  }, []);
+
+  useEffect(() => {
+    load();
+    const iv = setInterval(load, 15_000);
+    return () => clearInterval(iv);
+  }, [load]);
+
+  async function clearAll() {
+    if (!confirm('Clear the entire error log?')) return;
+    const res = await fetch('/api/admin/errors', { method: 'DELETE' });
+    if (res.ok) {
+      toast('Error log cleared', 'success');
+      load();
+    } else {
+      toast('Failed to clear log', 'error');
+    }
+  }
+
+  function copyReport(e: ErrorEntry) {
+    const text = [
+      `[${e.source}] ${e.context ?? ''} @ ${e.at}`,
+      e.url ? `page: ${e.url}` : null,
+      e.status !== undefined ? `status: ${e.status}` : null,
+      e.message,
+    ]
+      .filter(Boolean)
+      .join('\n');
+    navigator.clipboard.writeText(text).then(
+      () => toast('Report copied', 'success'),
+      () => toast('Copy failed', 'error'),
+    );
+  }
+
+  const sources = Array.from(new Set((errors ?? []).map((e) => e.source)));
+  const shown = (errors ?? []).filter((e) => source === 'all' || e.source === source);
+
+  return (
+    <section>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex gap-1 rounded-lg bg-bg-alt p-1">
+          {['all', ...sources].map((s) => (
+            <button
+              key={s}
+              onClick={() => setSource(s)}
+              className={cn(
+                'min-h-[36px] rounded-md px-3 py-1.5 text-sm capitalize',
+                source === s ? 'bg-rose/25 text-white' : 'text-ink-muted hover:text-ink',
+              )}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2">
+          <button onClick={load} className="min-h-[36px] rounded-lg border border-line px-3 text-sm text-ink-muted hover:text-ink">
+            Refresh
+          </button>
+          <button
+            onClick={clearAll}
+            className="min-h-[36px] rounded-lg border border-danger/40 px-3 text-sm text-danger hover:bg-danger/10"
+          >
+            Clear log
+          </button>
+        </div>
+      </div>
+      <p className="mb-4 text-xs text-ink-muted">
+        In-memory log — resets on redeploy/serverless cold starts. Use “GitHub” to file an issue
+        on the Nekomo repo with the report prefilled.
+      </p>
+      {!errors ? (
+        <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton h-20 rounded-2xl" />)}</div>
+      ) : shown.length === 0 ? (
+        <EmptyState title="No errors" body="Nothing logged — everything is healthy." />
+      ) : (
+        <ul className="space-y-3">
+          {shown.map((e) => (
+            <li key={e.id} className="rounded-2xl border border-line bg-card p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={cn(
+                        'rounded-full px-2.5 py-0.5 text-xs font-medium',
+                        e.source === 'client' ? 'bg-rose/15 text-rose-light' : 'bg-danger/15 text-danger',
+                      )}
+                    >
+                      {e.source}
+                    </span>
+                    {e.context && <span className="font-mono text-xs text-ink-muted">{e.context}</span>}
+                    <time className="text-xs text-ink-muted">{new Date(e.at).toLocaleString()}</time>
+                  </div>
+                  <p className="mt-2 break-words font-mono text-xs leading-relaxed text-ink">{e.message}</p>
+                  {e.url && <p className="mt-1 text-xs text-ink-muted">page: {e.url}</p>}
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    onClick={() => copyReport(e)}
+                    className="min-h-[36px] rounded-lg border border-line px-3 text-xs text-ink-muted transition-colors hover:text-ink"
+                  >
+                    Copy
+                  </button>
+                  <a
+                    href={githubIssueUrl(e)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-h-[36px] rounded-lg border border-line px-3 py-2 text-xs text-rose-light transition-colors hover:border-rose"
+                  >
+                    GitHub ↗
+                  </a>
+                </div>
               </div>
             </li>
           ))}
