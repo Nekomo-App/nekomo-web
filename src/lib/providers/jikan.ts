@@ -21,7 +21,7 @@ import type {
 } from '@/lib/types';
 
 const BASE = process.env.ANIME_METADATA_API_URL || 'https://api.jikan.moe/v4';
-const TIMEOUT_MS = 9000;
+const TIMEOUT_MS = 6000;
 const MIN_INTERVAL_MS = 400; // ~2.5 req/s, under Jikan's 3/s limit
 
 export class ProviderError extends Error {

@@ -6,6 +6,7 @@ import { Toaster } from '@/components/Toaster';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { SiteGate } from '@/components/SiteGate';
+import { ErrorReporter } from '@/components/ErrorReporter';
 
 export const metadata: Metadata = {
   title: { default: 'Nekomo — Discover your next story', template: '%s · Nekomo' },
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Navbar />
           <main className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0">
             <SiteGate>{children}</SiteGate>
+            <ErrorReporter />
           </main>
           <Footer dmcaEmail={process.env.DMCA_CONTACT_EMAIL} />
           <Toaster />
