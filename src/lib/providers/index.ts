@@ -14,8 +14,10 @@ import type {
 } from '@/lib/types';
 import * as jikan from './jikan';
 import * as anilist from './anilist';
+import * as kitsu from './kitsu';
 import * as local from './local';
 import { getAuthorizedStreamFor } from './streaming';
+import { getSkipTimes } from './aniskip';
 import { getFlags, getIntegration } from '@/lib/admin/store';
 
 const isLocalId = (id: string) => id.startsWith('loc-');
@@ -53,18 +55,31 @@ export async function getAnimeSearchResults(params: SearchParams): Promise<Searc
       return await anilist.search(params);
     } catch (err2) {
       logProviderError('search:anilist', err2);
-      return localOr(() => local.localSearch(params), {
-        items: [],
-        total: 0,
-        page: params.page ?? 1,
-        hasMore: false,
-      });
+      try {
+        return await kitsu.search(params);
+      } catch (err3) {
+        logProviderError('search:kitsu', err3);
+        return localOr(() => local.localSearch(params), {
+          items: [],
+          total: 0,
+          page: params.page ?? 1,
+          hasMore: false,
+        });
+      }
     }
   }
 }
 
 export async function getAnimeDetails(id: string): Promise<AnimeDetails | null> {
   if (isLocalId(id)) return local.localById(id);
+  if (kitsu.isKitsuId(id)) {
+    try {
+      return await kitsu.details(id);
+    } catch (err) {
+      logProviderError(`details:${id}:kitsu`, err);
+      return null;
+    }
+  }
   try {
     return await jikan.details(id);
   } catch (err) {
@@ -119,7 +134,11 @@ export async function getTrendingAnime(): Promise<AnimeSummary[]> {
       return await anilist.top();
     } catch (err2) {
       logProviderError('trending:anilist', err2);
-      return localOr<AnimeSummary[]>(local.localTrending, []);
+      try {
+        return await kitsu.trending();
+      } catch {
+        return localOr<AnimeSummary[]>(local.localTrending, []);
+      }
     }
   }
 }
@@ -233,6 +252,12 @@ export async function getAuthorizedStreamingSources(animeId: string, episodeId: 
   const details = await getAnimeDetails(animeId);
   if (!details) return { details: null, episode: null, stream: null };
   const episode = details.episodeList.find((e) => e.id === episodeId || String(e.number) === episodeId) ?? null;
+  if (episode) {
+    // AniSkip supplies intro/outro timestamps keyed by MAL id — never throws.
+    const skip = await getSkipTimes(animeId, episode.number, details.durationMin);
+    if (skip.intro) episode.intro = skip.intro;
+    if (skip.outro) episode.outro = skip.outro;
+  }
   const stream = episode ? getAuthorizedStreamFor(details, episode) : null;
   return { details, episode, stream };
 }

@@ -84,6 +84,7 @@ interface NekomoState {
   comments: Record<string, Comment[]>;
   notifications: AppNotification[];
   language: Lang;
+  disclaimerAccepted: boolean;
   toggleWatchlist: (a: AnimeSummary) => boolean;
   inWatchlist: (id: string) => boolean;
   markViewed: (a: { id: string; title: string; poster?: string; artHue?: number; format?: string }) => void;
@@ -103,6 +104,7 @@ interface NekomoState {
   markNotificationsRead: () => void;
   clearNotifications: () => void;
   setLanguage: (l: Lang) => void;
+  acceptDisclaimer: () => void;
   clearHistory: () => void;
   removeFromWatchlist: (id: string) => void;
 }
@@ -125,6 +127,7 @@ export const useStore = create<NekomoState>()(
       comments: {},
       notifications: [],
       language: 'en',
+      disclaimerAccepted: false,
 
       toggleWatchlist: (a) => {
         const list = get().watchlist;
@@ -225,6 +228,7 @@ export const useStore = create<NekomoState>()(
         set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) })),
       clearNotifications: () => set({ notifications: [] }),
       setLanguage: (l) => set({ language: l }),
+      acceptDisclaimer: () => set({ disclaimerAccepted: true }),
       setProfile: (p) => set({ profile: p }),
       clearHistory: () => set({ history: [] }),
     }),
