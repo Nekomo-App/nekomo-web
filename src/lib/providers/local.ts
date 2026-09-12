@@ -20,12 +20,45 @@ import type {
 import { currentSeason } from '@/lib/utils';
 
 const CC = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample';
+const IA = 'https://archive.org/download';
 
+/**
+ * Creative Commons films (© Blender Foundation, CC-BY 3.0) mirrored across
+ * multiple legal hosts. Each mirror becomes a selectable source in the
+ * player's source picker — if one host is down or geo-blocked, pick another.
+ */
 const CC_VIDEOS = [
-  { url: `${CC}/BigBuckBunny.mp4`, note: 'Big Buck Bunny © Blender Foundation — CC-BY 3.0' },
-  { url: `${CC}/Sintel.mp4`, note: 'Sintel © Blender Foundation — CC-BY 3.0' },
-  { url: `${CC}/TearsOfSteel.mp4`, note: 'Tears of Steel © Blender Foundation — CC-BY 3.0' },
-  { url: `${CC}/ElephantsDream.mp4`, note: 'Elephants Dream © Blender Foundation — CC-BY 3.0' },
+  {
+    note: 'Big Buck Bunny © Blender Foundation — CC-BY 3.0',
+    mirrors: [
+      { label: 'GCS', url: `${CC}/BigBuckBunny.mp4` },
+      { label: 'Internet Archive', url: `${IA}/BigBuckBunny_124/Content%2Fbig_buck_bunny_720p_surround.mp4` },
+    ],
+  },
+  {
+    note: 'Sintel © Blender Foundation — CC-BY 3.0',
+    mirrors: [
+      { label: 'GCS', url: `${CC}/Sintel.mp4` },
+      { label: 'Internet Archive', url: `${IA}/Sintel/sintel-2048-surround_512kb.mp4` },
+      { label: 'IA · low', url: `${IA}/Sintel/sintel-2048-stereo_512kb.mp4` },
+    ],
+  },
+  {
+    note: 'Tears of Steel © Blender Foundation — CC-BY 3.0',
+    mirrors: [
+      { label: 'GCS', url: `${CC}/TearsOfSteel.mp4` },
+      { label: 'Internet Archive', url: `${IA}/Tears-of-Steel/tears_of_steel_720p.mp4` },
+      { label: 'IA · HD', url: `${IA}/Tears-of-Steel/tears_of_steel_1080p.mp4` },
+    ],
+  },
+  {
+    note: 'Elephants Dream © Blender Foundation — CC-BY 3.0',
+    mirrors: [
+      { label: 'GCS', url: `${CC}/ElephantsDream.mp4` },
+      { label: 'Internet Archive', url: `${IA}/ElephantsDream/ed_hd_512kb.mp4` },
+      { label: 'IA · low', url: `${IA}/ElephantsDream/ed_1024_512kb.mp4` },
+    ],
+  },
 ];
 
 function ccStream(index: number): AuthorizedStream {
@@ -33,7 +66,8 @@ function ccStream(index: number): AuthorizedStream {
   return {
     provider: 'Nekomo Originals',
     kind: 'mp4',
-    url: v.url,
+    url: v.mirrors[0].url,
+    qualities: v.mirrors.map((m) => ({ label: m.label, url: m.url })),
     subtitles: [{ lang: 'en', label: 'English', url: '/subtitles/originals-en.vtt' }],
     audioLanguages: ['Japanese'],
     licensed: true,

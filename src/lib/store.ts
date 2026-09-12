@@ -80,7 +80,7 @@ interface NekomoState {
   autoplayNext: boolean;
   reducedMotion: boolean;
   theme: ThemeSettings;
-  profile: { name: string; email: string } | null;
+  profile: { name: string; email?: string; avatar?: string; provider?: 'local' | 'anilist' } | null;
   comments: Record<string, Comment[]>;
   notifications: AppNotification[];
   language: Lang;
@@ -88,7 +88,7 @@ interface NekomoState {
   toggleWatchlist: (a: AnimeSummary) => boolean;
   inWatchlist: (id: string) => boolean;
   markViewed: (a: { id: string; title: string; poster?: string; artHue?: number; format?: string }) => void;
-  saveProgress: (p: Omit<WatchProgress, 'updatedAt'>) => void;
+  saveProgress: (p: Omit<WatchProgress, 'updatedAt'>, opts?: { remote?: boolean }) => void;
   clearProgress: (animeId: string, episodeId: string) => void;
   toggleWatchedEpisode: (animeId: string, episodeNumber: number) => void;
   setRating: (animeId: string, score: number) => void;
@@ -97,7 +97,7 @@ interface NekomoState {
   setReducedMotion: (v: boolean) => void;
   setTheme: (patch: Partial<ThemeSettings>) => void;
   resetTheme: () => void;
-  setProfile: (p: { name: string; email: string } | null) => void;
+  setProfile: (p: { name: string; email?: string; avatar?: string; provider?: 'local' | 'anilist' } | null) => void;
   addComment: (animeId: string, author: string, text: string) => void;
   deleteComment: (animeId: string, id: string) => void;
   notify: (title: string, body?: string) => void;
@@ -147,13 +147,24 @@ export const useStore = create<NekomoState>()(
           ].slice(0, 60),
         }),
 
-      saveProgress: (p) =>
+      saveProgress: (p, opts) => {
         set({
           progress: {
             ...get().progress,
             [progressKey(p.animeId, p.episodeId)]: { ...p, updatedAt: Date.now() },
           },
-        }),
+        });
+        // Mirror episode progress to AniList when signed in with it.
+        // Skipped for entries the AniList sync itself wrote (opts.remote === false).
+        const profile = get().profile;
+        if (opts?.remote !== false && profile?.provider === 'anilist' && /^\d+$/.test(p.animeId) && p.episodeNumber > 0) {
+          fetch('/api/anilist/progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ malId: Number(p.animeId), progress: p.episodeNumber }),
+          }).catch(() => {});
+        }
+      },
       clearProgress: (animeId, episodeId) => {
         const next = { ...get().progress };
         delete next[progressKey(animeId, episodeId)];

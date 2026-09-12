@@ -145,7 +145,7 @@ export default async function WatchPage({
 
           <div className="mt-4 rounded-xl border border-line bg-card/50 p-4">
             <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              Official sources
+              Official &amp; free sources
             </h3>
             <ul className="space-y-1.5">
               {links.map((l) => (
@@ -158,6 +158,7 @@ export default async function WatchPage({
                   >
                     {l.platform} ↗
                   </a>
+                  {l.note && <p className="text-xs text-ink-muted">{l.note}</p>}
                 </li>
               ))}
             </ul>
@@ -175,7 +176,7 @@ function NoStreamPanel({
 }: {
   title: string;
   trailerId?: string;
-  links: { platform: string; url: string }[];
+  links: { platform: string; url: string; note?: string }[];
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-line bg-card">
@@ -210,6 +211,7 @@ function NoStreamPanel({
                 className="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2.5 text-sm font-medium transition-all hover:border-rose hover:text-white"
               >
                 {l.platform} <span aria-hidden="true">↗</span>
+                {l.note && <span className="text-xs text-ink-muted">{l.note}</span>}
               </a>
             </li>
           ))}

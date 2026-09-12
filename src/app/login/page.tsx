@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useHydrated, useStore } from '@/lib/store';
 import { toast } from '@/components/Toaster';
 import { Logo } from '@/components/Logo';
@@ -48,6 +48,30 @@ function LoginInner() {
   const setProfile = useStore((s) => s.setProfile);
   const disclaimerAccepted = useStore((s) => s.disclaimerAccepted);
   const acceptDisclaimer = useStore((s) => s.acceptDisclaimer);
+  const oauthHandled = useRef(false);
+
+  // Returning from AniList OAuth — pick up the server session.
+  useEffect(() => {
+    if (oauthHandled.current) return;
+    const err = params.get('error');
+    if (err === 'oauth-not-configured') toast('AniList sign-in is not configured on this deployment', 'error');
+    else if (err === 'oauth-state') toast('Sign-in check failed — try again', 'error');
+    else if (err === 'oauth-failed') toast('AniList sign-in failed — try again', 'error');
+    if (err) oauthHandled.current = true;
+
+    if (params.get('oauth') !== 'done') return;
+    oauthHandled.current = true;
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.user) return;
+        setProfile({ name: d.user.name, avatar: d.user.avatar, provider: 'anilist' });
+        toast(`Welcome, ${d.user.name}`, 'success');
+        if (useStore.getState().disclaimerAccepted) router.push(next);
+        else setStage('disclaimer');
+      })
+      .catch(() => {});
+  }, [params, next, router, setProfile]);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -67,13 +91,16 @@ function LoginInner() {
       setMode('signin');
       return;
     }
-    setProfile({ name: name.trim() || email.split('@')[0], email });
+    setProfile({ name: name.trim() || email.split('@')[0], email, provider: 'local' });
     toast(mode === 'register' ? 'Account created — welcome!' : 'Signed in', 'success');
     if (disclaimerAccepted) router.push(next);
     else setStage('disclaimer');
   };
 
   const signOut = () => {
+    if (profile?.provider === 'anilist') {
+      fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    }
     setProfile(null);
     toast('Signed out', 'info');
   };
@@ -86,19 +113,33 @@ function LoginInner() {
       </h1>
       <p className="mt-1 text-center text-sm text-ink-muted">
         {hydrated && profile
-          ? `Signed in as ${profile.email}`
-          : 'Demo accounts are stored on this device only — nothing is sent to a server.'}
+          ? `Signed in as ${profile.email || profile.name}`
+          : 'Sign in with AniList to sync your list, or create a local profile stored on this device.'}
       </p>
 
       {hydrated && profile ? (
         <div className="mt-8 w-full space-y-3 rounded-2xl border border-line bg-card p-6">
-          <div className="flex justify-between text-sm">
+          <div className="flex items-center justify-between text-sm">
             <span className="text-ink-muted">Name</span>
-            <span className="font-medium">{profile.name}</span>
+            <span className="flex items-center gap-2 font-medium">
+              {profile.avatar && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={profile.avatar} alt="" className="h-6 w-6 rounded-full" />
+              )}
+              {profile.name}
+            </span>
           </div>
+          {profile.email && (
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-muted">Email</span>
+              <span className="font-medium">{profile.email}</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm">
-            <span className="text-ink-muted">Email</span>
-            <span className="font-medium">{profile.email}</span>
+            <span className="text-ink-muted">Account</span>
+            <span className="font-medium">
+              {profile.provider === 'anilist' ? 'AniList' : 'Local profile'}
+            </span>
           </div>
           <button
             onClick={() => router.push(next)}
@@ -123,7 +164,26 @@ function LoginInner() {
           }}
         />
       ) : (
-        <div className="mt-8 w-full rounded-2xl border border-line bg-card p-6">
+        <>
+          {/* Real account sign-in — your AniList list and progress sync. */}
+          <a
+            href={`/api/auth/anilist?next=${encodeURIComponent(next)}`}
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-[#02a9ff] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#0290db]"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M6.36 18.59 4.88 17.1l7.34-7.34c.4-.4 1.05-.4 1.45 0l.01.01c.4.4.4 1.05 0 1.45l-7.32 7.37zM12 3a9 9 0 1 0 9 9h-2.98A6.03 6.03 0 0 1 12 18.03 6.03 6.03 0 0 1 5.97 12 6.03 6.03 0 0 1 12 5.97V3zm0 7.58a1.42 1.42 0 1 0 0 2.84 1.42 1.42 0 0 0 0-2.84z"/>
+            </svg>
+            Sign in with AniList
+          </a>
+          <p className="mt-2 text-center text-xs text-ink-muted">
+            Real account — syncs your watching list and progress.
+          </p>
+          <div className="mt-6 flex items-center gap-3 text-xs text-ink-muted" role="separator">
+            <span className="h-px flex-1 bg-line" />
+            or use a local profile
+            <span className="h-px flex-1 bg-line" />
+          </div>
+          <div className="mt-4 w-full rounded-2xl border border-line bg-card p-6">
           <div role="tablist" className="mb-6 flex gap-1 rounded-xl bg-bg-alt p-1">
             {TABS.map((t) => (
               <button
@@ -208,7 +268,8 @@ function LoginInner() {
               {mode === 'signin' ? 'Sign in' : mode === 'register' ? 'Create account' : 'Send reset link'}
             </button>
           </form>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
