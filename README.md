@@ -22,19 +22,27 @@ npm run typecheck  # tsc --noEmit
 npm test           # vitest unit tests
 ```
 
-## Deploying to Vercel
+## Deploying
 
-Nekomo is a standard Next.js app — zero-config on Vercel:
+Nekomo is a standard Next.js app — it deploys to Vercel or Netlify with no code changes.
+
+**Vercel**
 
 1. Push the repo to GitHub/GitLab and import it at https://vercel.com/new.
-2. Set environment variables in **Project → Settings → Environment Variables**
-   (`ADMIN_KEY` and `AUTH_SECRET` are required for the admin area in production).
-3. Deploy. All API routes run as serverless functions; the security headers in
-   `next.config.mjs` apply automatically. HSTS activates in production.
+2. Set env vars in **Project → Settings → Environment Variables**
+   (`ADMIN_KEY` + `AUTH_SECRET` required for the admin area in production).
+3. Deploy. API routes run as serverless functions; security headers apply automatically; HSTS activates in production.
+
+**Netlify**
+
+1. `netlify.toml` is included — it builds with `npm run build` and applies
+   `@netlify/plugin-nextjs` (App Router / API routes / images supported).
+2. Import the repo at https://app.netlify.com/start, or `netlify deploy --build --prod`.
+3. Set env vars in **Site → Environment variables**.
 
 Note: the in-memory admin store (integrations, reports, flags) resets between
-serverless invocations on Vercel. Attach a database (see `DATABASE_URL`) for
-persistent admin state.
+serverless invocations on both platforms. Attach a database (see `DATABASE_URL`)
+for persistent admin state.
 
 ## What works out of the box
 
